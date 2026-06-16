@@ -1,7 +1,11 @@
-// 백엔드(FastAPI) 호출 헬퍼. vite.config.js 의 proxy 덕분에 /api 로만 부르면 됩니다.
+// 백엔드(FastAPI) 호출 헬퍼.
+// - 개발: VITE_API_BASE 가 비어 있어 "/api" 상대경로 → vite.config.js proxy 가 8000으로 넘김
+// - 배포: 빌드 시 VITE_API_BASE 에 백엔드 주소(예: https://xxx.onrender.com)를 넣으면 그쪽으로 호출
+const API_BASE = (import.meta.env.VITE_API_BASE || "").replace(/\/$/, "");
+const api = (path) => API_BASE + path;
 
 export async function getStock(query) {
-  const r = await fetch("/api/stock/" + encodeURIComponent(query));
+  const r = await fetch(api("/api/stock/" + encodeURIComponent(query)));
   if (!r.ok) throw new Error("서버 응답 실패 (" + r.status + ")");
   return r.json();
 }
@@ -9,7 +13,7 @@ export async function getStock(query) {
 // 2차(느린) 데이터: 3개년 재무·공시·뉴스. 가격 카드를 먼저 띄운 뒤 비동기로 채움.
 export async function getDetails(query) {
   try {
-    const r = await fetch("/api/details/" + encodeURIComponent(query));
+    const r = await fetch(api("/api/details/" + encodeURIComponent(query)));
     if (!r.ok) return {};
     return r.json();
   } catch {
@@ -20,7 +24,7 @@ export async function getDetails(query) {
 // 진짜 숫자를 '고등학생 눈높이'로 풀어주는 설명. 백엔드에 키 없으면 null.
 export async function getExplain(query) {
   try {
-    const r = await fetch("/api/explain/" + encodeURIComponent(query));
+    const r = await fetch(api("/api/explain/" + encodeURIComponent(query)));
     if (!r.ok) return null;
     const d = await r.json();
     return d.explanation || null;
@@ -30,7 +34,7 @@ export async function getExplain(query) {
 }
 
 export async function getTrending() {
-  const r = await fetch("/api/trending");
+  const r = await fetch(api("/api/trending"));
   if (!r.ok) throw new Error("서버 응답 실패 (" + r.status + ")");
   return r.json();
 }
