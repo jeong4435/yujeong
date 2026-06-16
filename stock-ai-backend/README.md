@@ -5,8 +5,9 @@ DART(전자공시)·KRX·야후에서 **진짜 주식 데이터**를 가져와 J
 
 ## 가져오는 데이터
 - **시세·거래량·등락률** — FinanceDataReader (KRX/네이버/야후)
-- **PER·PBR·EPS** — pykrx
-- **재무제표(매출·영업이익·순이익)·최근 공시** — OpenDART (`OpenDartReader`)
+- **PER·PBR·EPS·예상PER** — 네이버 금융
+- **재무제표 3개년(매출·영업이익·순이익)·최근 공시** — OpenDART (`OpenDartReader`)
+- **최근 3개월 종목 뉴스** — 네이버 금융 뉴스
 - (선택) **고등학생 눈높이 설명** — Anthropic API. `ANTHROPIC_API_KEY`가 있을 때만 작동
 
 ## 실행 방법
@@ -31,9 +32,13 @@ uvicorn app.main:app --reload
 ## 엔드포인트
 | 경로 | 설명 |
 |---|---|
-| `GET /api/stock/삼성전자` 또는 `/api/stock/005930` | 진짜 데이터 JSON |
-| `GET /api/analyze/삼성전자` | 위 + (키 있으면) 쉬운 설명 |
+| `GET /api/stock/005930` | 1차(빠름): 시세·PER·밸류해설 |
+| `GET /api/details/005930` | 2차(느림): 3개년 재무·공시·뉴스 |
+| `GET /api/analyze/005930` | 전체 + (키 있으면) 쉬운 설명 |
+| `GET /api/trending` | 이슈 종목(거래대금 상위·급등·급락) |
 | `GET /api/health` | 키 로드 상태 확인 |
+
+화면은 1차를 먼저 그리고 2차를 비동기로 채웁니다(체감 속도↑). 같은 종목 재조회는 메모리 캐시로 즉시 응답합니다.
 
 예시:
 ```bash

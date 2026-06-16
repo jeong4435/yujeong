@@ -6,6 +6,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    host: true,                 // 외부(터널)에서 접속 허용
+    allowedHosts: true,         // 임시 공개 링크(cloudflared 등) 호스트 허용
     proxy: {
       "/api": "http://localhost:8000",
     },

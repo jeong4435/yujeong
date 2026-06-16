@@ -6,6 +6,17 @@ export async function getStock(query) {
   return r.json();
 }
 
+// 2차(느린) 데이터: 3개년 재무·공시·뉴스. 가격 카드를 먼저 띄운 뒤 비동기로 채움.
+export async function getDetails(query) {
+  try {
+    const r = await fetch("/api/details/" + encodeURIComponent(query));
+    if (!r.ok) return {};
+    return r.json();
+  } catch {
+    return {};
+  }
+}
+
 // 진짜 숫자를 '고등학생 눈높이'로 풀어주는 설명. 백엔드에 키 없으면 null.
 export async function getExplain(query) {
   try {

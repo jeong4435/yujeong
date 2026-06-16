@@ -20,7 +20,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-from . import market, dart, explain
+from . import market, dart, explain, news
 
 app = FastAPI(title="주식도 AI API", version="1.0")
 
@@ -35,21 +35,75 @@ app.add_middleware(
 _HERE = os.path.dirname(__file__)
 
 
-def _collect(query: str) -> dict:
+@app.on_event("startup")
+def _prewarm():
+    """서버가 켜질 때 KRX 종목목록을 백그라운드로 미리 로딩.
+    첫 사용자가 '목록 받느라 느린' 콜드 스타트를 겪지 않게 한다. (부팅은 막지 않음)"""
+    import threading
+
+    def warm():
+        try:
+            market.resolve("005930")   # _listing() lru_cache 채우기
+        except Exception:
+            pass
+
+    threading.Thread(target=warm, daemon=True).start()
+
+
+def _resolve(query: str):
+    """질의 → (code, name) 또는 (None, 에러dict)."""
     code, name = market.resolve(query)
     if not code:
-        return {"error": f"'{query}' 종목을 찾지 못했어요. 종목명 또는 6자리 코드로 다시 시도해 주세요."}
+        return None, {"error": f"'{query}' 종목을 찾지 못했어요. 종목명 또는 6자리 코드로 다시 시도해 주세요."}
+    return code, name
+
+
+def _core(query: str) -> dict:
+    """빠른 1차 데이터: 시세·PER·밸류해설. (가격 카드를 먼저 띄우기 위함)"""
+    code, name = _resolve(query)
+    if code is None:
+        return name  # 에러 dict
     data = {"code": code, "name": name}
-    data.update(market.quote(code))                 # price, volume, change_pct, as_of
-    data["fundamentals"] = market.fundamentals(code)  # per, pbr, eps
-    data["financials"] = dart.financials(code)        # year, revenue, operating_profit, net_income
-    data["disclosures"] = dart.disclosures(code)      # 최근 공시 목록
+    data.update(market.quote(code))                   # price, volume, change_pct, as_of
+    data["fundamentals"] = market.fundamentals(code)  # per, pbr, eps, forward_per
+    data["value_analysis"] = market.value_analysis(data["fundamentals"], {})
+    return data
+
+
+def _details(query: str) -> dict:
+    """느린 2차 데이터: 3개년 재무·공시·뉴스. (1차 화면 뒤에 채워 넣음)"""
+    code, name = _resolve(query)
+    if code is None:
+        return name  # 에러 dict
+    fin = dart.financials(code)                        # 3개년 추세 포함
+    return {
+        "financials": fin,
+        "disclosures": dart.disclosures(code),         # 최근 공시 2건
+        "news": news.recent_news(code),                # 최근 3개월 기사
+        # 재무 추세까지 반영한 더 풍부한 밸류 해설로 업그레이드
+        "value_analysis": market.value_analysis(market.fundamentals(code), fin),
+    }
+
+
+def _collect(query: str) -> dict:
+    """1차+2차 전체 (analyze·explain 용)."""
+    data = _core(query)
+    if data.get("error"):
+        return data
+    data.update(_details(query))
     return data
 
 
 @app.get("/api/stock/{query}")
 def stock(query: str):
-    return _collect(query)
+    """1차(빠름): 시세·PER·밸류해설."""
+    return _core(query)
+
+
+@app.get("/api/details/{query}")
+def details(query: str):
+    """2차(느림): 3개년 재무·공시·뉴스."""
+    return _details(query)
 
 
 @app.get("/api/analyze/{query}")

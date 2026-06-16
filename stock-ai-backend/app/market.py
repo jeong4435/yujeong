@@ -1,6 +1,6 @@
 """시세·거래량·PER 등 '시장 데이터' 담당.
 - FinanceDataReader: 종목 목록(이름↔코드), 일별 OHLCV(종가·거래량·등락률)
-- pykrx: PER/PBR/EPS 같은 펀더멘털
+- 네이버 금융: PER/PBR/EPS 같은 펀더멘털
 한 소스가 실패해도 전체가 죽지 않도록 모두 try/except로 감쌌습니다.
 """
 import datetime as dt
@@ -9,10 +9,7 @@ from functools import lru_cache
 import requests
 import FinanceDataReader as fdr
 
-try:
-    from pykrx import stock as krx
-except Exception:
-    krx = None
+from .cache import ttl_cache
 
 
 @lru_cache(maxsize=1)
@@ -57,6 +54,7 @@ def resolve(query: str):
     return None, None
 
 
+@ttl_cache(120)  # 시세는 자주 바뀌니 2분만 캐시
 def quote(code: str) -> dict:
     """최근 종가·거래량·등락률."""
     try:
@@ -141,7 +139,7 @@ def _parse_num(x):
 
 
 def _fundamentals_naver(code: str) -> dict:
-    """네이버 금융 통합 API에서 PER·PBR·EPS. KRX가 막혀도 동작하는 메인 소스."""
+    """네이버 금융 통합 API에서 PER·PBR·EPS·예상PER. KRX가 막혀도 동작하는 메인 소스."""
     url = f"https://m.stock.naver.com/api/stock/{code}/integration"
     r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
     info = {x.get("code"): x.get("value") for x in (r.json().get("totalInfos") or [])}
@@ -149,38 +147,68 @@ def _fundamentals_naver(code: str) -> dict:
         "per": _parse_num(info.get("per")),
         "pbr": _parse_num(info.get("pbr")),
         "eps": _parse_num(info.get("eps")),
+        "forward_per": _parse_num(info.get("cnsPer")),  # 증권사 예상이익 기준 PER
     }
-    # 셋 다 비면 의미 없으니 빈 값 취급
-    return out if any(v is not None for v in out.values()) else {}
+    # per/pbr/eps 모두 비면 의미 없으니 빈 값 취급
+    return out if any(out.get(k) is not None for k in ("per", "pbr", "eps")) else {}
 
 
-def _fundamentals_pykrx(code: str) -> dict:
-    """폴백: pykrx. (KRX API 변경 시 빈 값 반환 — 그래도 죽지 않음)"""
-    if krx is None:
-        return {}
-    try:
-        today = dt.date.today()
-        start = (today - dt.timedelta(days=12)).strftime("%Y%m%d")
-        end = today.strftime("%Y%m%d")
-        df = krx.get_market_fundamental_by_date(start, end, code)
-        if df is None or len(df) == 0:
-            return {}
-        last = df.iloc[-1]
-        return {
-            "per": _parse_num(last.get("PER")),
-            "pbr": _parse_num(last.get("PBR")),
-            "eps": _parse_num(last.get("EPS")),
-        }
-    except Exception:
-        return {}
-
-
+@ttl_cache(600)  # PER/PBR 등은 10분 캐시
 def fundamentals(code: str) -> dict:
-    """PER·PBR·EPS. 네이버 금융을 메인으로, 실패하면 pykrx로 폴백."""
+    """PER·PBR·EPS·예상PER. 네이버 금융에서. 실패하면 빈 값."""
     try:
-        out = _fundamentals_naver(code)
-        if out:
-            return out
+        return _fundamentals_naver(code)
     except Exception:
-        pass
-    return _fundamentals_pykrx(code)
+        return {}
+
+
+def value_analysis(fu: dict, fin: dict) -> str:
+    """PER을 중심으로 '지금 가격이 싼지 비싼지'를 고등학생 눈높이로 5줄 이내 설명.
+    AI 키 없이도 동작하는 규칙 기반 텍스트. (단정적 매수·매도 표현 금지)"""
+    fu = fu or {}
+    per = fu.get("per")
+    pbr = fu.get("pbr")
+    fwd = fu.get("forward_per")
+    net_dir = ((fin or {}).get("trend") or {}).get("net_income_dir")
+
+    lines = []
+
+    # 1) 적자/PER 없음
+    if per is None or per <= 0:
+        lines.append("이 회사는 최근 이익이 없거나 적자라서, '이익 대비 주가'인 PER로는 비싼지 싼지를 따지기 어려워요.")
+        if pbr is not None:
+            lines.append(f"대신 PBR(주가÷순자산)이 {pbr}배인데, 1배보다 낮으면 가진 자산보다 주가가 낮게 평가된 편이에요.")
+        lines.append("이익이 흑자로 돌아서면 그때 PER로 다시 따져보는 게 좋아요.")
+        return " ".join(lines[:5])
+
+    # 2) PER 밴드 해석 (시장 평균 대략 10~15배 기준)
+    if per < 10:
+        band = f"PER이 {per}배예요. 회사가 버는 이익에 비하면 주가가 낮은 편(저평가 쪽)으로 볼 수 있어요."
+    elif per < 15:
+        band = f"PER이 {per}배로, 우리 시장 평균(보통 10~15배)과 비슷한 수준이에요."
+    elif per < 25:
+        band = f"PER이 {per}배예요. 시장 평균보다 조금 높아서, 앞으로 더 잘 벌 거란 기대가 어느 정도 들어가 있어요."
+    elif per < 40:
+        band = f"PER이 {per}배로 꽤 높은 편이에요. 그만큼 성장 기대가 주가에 많이 반영돼 있다는 뜻이에요."
+    else:
+        band = f"PER이 {per}배로 매우 높아요. 지금 이익만 보면 비싼 편이고, 큰 성장을 미리 기대한 가격이에요."
+    lines.append(band)
+
+    # 3) 예상 PER(미래이익 기준) 비교
+    if fwd is not None and fwd > 0:
+        if fwd < per * 0.8:
+            lines.append(f"다만 증권사 예상이익 기준 PER은 {fwd}배로 더 낮아져요. 앞으로 이익이 늘 거란 기대가 깔려 있다는 신호예요.")
+        elif fwd > per * 1.2:
+            lines.append(f"반대로 예상이익 기준 PER은 {fwd}배로 더 높아져요. 앞으로 이익이 줄 수도 있다는 전망이 섞여 있어요.")
+        else:
+            lines.append(f"예상이익 기준 PER도 {fwd}배로 비슷해서, 이익 흐름이 안정적이라는 뜻이에요.")
+
+    # 4) 이익 추세로 보강
+    if net_dir in ("up", "mixed_up"):
+        lines.append("최근 순이익이 늘어나는 흐름이라, 높은 PER이 어느 정도 설명돼요.")
+    elif net_dir in ("down", "mixed_down"):
+        lines.append("최근 순이익이 줄어드는 흐름이라, PER 숫자만 믿기보단 이익이 다시 늘지 같이 봐야 해요.")
+
+    # 5) 마무리 — 비교의 중요성
+    lines.append("PER은 같은 업종끼리 비교해야 의미가 커요. 한 숫자만으로 싸다·비싸다 단정하긴 어렵습니다.")
+    return " ".join(lines[:5])
