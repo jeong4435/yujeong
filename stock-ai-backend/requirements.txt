@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+finance-datareader
+pykrx
+opendartreader
+requests
+lxml
+anthropic
