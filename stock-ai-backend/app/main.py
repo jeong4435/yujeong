@@ -43,7 +43,11 @@ def _prewarm():
 
     def warm():
         try:
-            market.resolve("005930")   # _listing() lru_cache 채우기
+            market.resolve("005930")   # KRX 종목목록 lru_cache 채우기
+        except Exception:
+            pass
+        try:
+            dart._corp_map()           # DART 기업코드 맵(코드↔고유번호) 미리 적재
         except Exception:
             pass
 
