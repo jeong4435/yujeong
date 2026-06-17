@@ -10,7 +10,7 @@ try:
 except Exception:
     genai = None
 
-MODEL = "gemini-1.5-flash"
+MODEL = "gemini-1.5-flash-latest"
 
 
 def _build_prompt(data: dict) -> str:
