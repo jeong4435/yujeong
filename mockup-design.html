@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>주식도 AI · 새 디자인 시안</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#FFFFFF; --ink:#191F28; --ink2:#333D4B; --gray:#8B95A1; --gray2:#AEB6BE;
+    --line:#EFF1F4; --soft:#F4F6F8; --soft2:#F8F9FA; --btn:#F2F4F6;
+    --accent:#6C5CE7; --accent-d:#5B4BD6; --accent-soft:#F0EEFF;
+    --up:#F04452; --down:#3182F6;
+  }
+  body{font-family:'Pretendard',system-ui,sans-serif;background:#EEF0F2;color:var(--ink);
+    line-height:1.5;letter-spacing:-.02em;-webkit-font-smoothing:antialiased;padding:24px 14px 70px;}
+  .ph{max-width:860px;margin:0 auto 16px;}
+  .ph h1{font-size:21px;font-weight:800;letter-spacing:-.03em;}
+  .ph p{color:#6B7480;font-size:14px;margin-top:6px;}
+  .seclbl{max-width:860px;margin:26px auto 10px;font-size:13px;font-weight:800;color:#6B7480;padding-left:4px;}
+
+  .pal{max-width:860px;margin:0 auto 8px;background:#fff;border-radius:16px;padding:14px 18px;box-shadow:0 2px 12px rgba(25,31,40,.05);}
+  .pal h4{font-size:12.5px;font-weight:800;color:var(--gray);margin-bottom:11px;}
+  .sw{display:flex;flex-wrap:wrap;gap:10px;}
+  .chip{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;}
+  .dot{width:24px;height:24px;border-radius:8px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.05);}
+
+  .app{max-width:860px;margin:0 auto;background:var(--bg);border-radius:20px;overflow:hidden;
+    box-shadow:0 4px 24px rgba(25,31,40,.07);}
+
+  /* 헤더 — 텍스트 워드마크 (누르면 홈) */
+  .top{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--line);}
+  .wordmark{font-size:19px;font-weight:800;letter-spacing:-.04em;cursor:pointer;}
+  .wordmark .ai{color:var(--accent);}
+  .login{border:none;background:var(--btn);color:var(--ink2);font-family:inherit;font-weight:700;
+    font-size:13.5px;padding:10px 16px;border-radius:12px;display:flex;align-items:center;gap:7px;cursor:pointer;}
+  .login:hover{background:#E9ECEF;}
+  .gg{width:15px;height:15px;background:radial-gradient(circle at 50% 50%,#fff 38%,transparent 40%),conic-gradient(#EA4335 0 25%,#FBBC05 0 50%,#34A853 0 75%,#4285F4 0 100%);border-radius:50%;display:inline-block;}
+  .avatar{width:34px;height:34px;border-radius:50%;background:var(--accent-soft);
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:var(--accent-d);}
+
+  /* 탭 — 활성은 연보라 알약 */
+  .tabs{display:flex;gap:6px;padding:16px 24px;flex-wrap:wrap;}
+  .tab{font-size:14px;font-weight:700;color:var(--gray);padding:10px 15px;border-radius:11px;cursor:pointer;}
+  .tab:hover{color:var(--ink2);}
+  .tab.on{background:var(--accent-soft);color:var(--accent-d);}
+  .tab .soon{font-size:11px;opacity:.55;margin-left:3px;}
+
+  .body{padding:8px 24px 26px;}
+
+  .price-h{padding:10px 2px 22px;}
+  .price-h .nm{font-size:14.5px;color:var(--gray);font-weight:700;}
+  .price-h .pv{font-size:40px;font-weight:800;letter-spacing:-.045em;margin-top:4px;line-height:1.1;}
+  .price-h .ch{font-size:15px;font-weight:700;color:var(--up);margin-top:6px;}
+  .price-h .ch .mk{color:var(--gray);font-weight:600;margin-left:10px;}
+
+  .verdict{display:flex;align-items:center;gap:12px;background:var(--accent-soft);border-radius:16px;padding:16px 18px;margin-bottom:16px;}
+  .verdict .bg{font-size:14px;font-weight:800;color:#fff;background:var(--accent);padding:8px 14px;border-radius:11px;flex:none;}
+  .verdict .tx{font-size:13.5px;color:#4A4470;font-weight:500;line-height:1.5;}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:16px;}
+  .card{background:var(--bg);border:1px solid var(--line);border-radius:18px;padding:20px;}
+  .card h3{font-size:14.5px;font-weight:800;margin-bottom:8px;display:flex;justify-content:space-between;align-items:baseline;}
+  .card h3 .when{font-size:11.5px;color:var(--gray2);font-weight:600;}
+  .kv{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--soft);}
+  .kv:last-child{border-bottom:none;}
+  .kv .k{font-size:13.5px;color:var(--gray);font-weight:600;}
+  .kv .v{font-size:14.5px;font-weight:800;}
+
+  .trend{display:flex;gap:10px;margin-top:8px;}
+  .trend .yr{flex:1;background:var(--soft2);border-radius:13px;padding:14px 8px;text-align:center;}
+  .trend .yr .y{font-size:11.5px;color:var(--gray2);font-weight:700;}
+  .trend .yr .a{font-size:15px;font-weight:800;margin-top:4px;}
+  .trend .yr .a.dn{color:var(--down);}
+
+  .note{background:var(--soft);border-radius:18px;padding:18px 20px;margin-bottom:16px;}
+  .note .lbl{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:800;color:var(--ink2);}
+  .note .lbl .ic{width:22px;height:22px;border-radius:7px;background:#E4E8EC;color:var(--ink2);
+    display:flex;align-items:center;justify-content:center;font-size:12px;}
+  .note .txt{font-size:14px;color:#4E5968;line-height:1.65;margin-top:9px;}
+
+  .disc{font-size:12px;color:var(--gray2);line-height:1.65;padding:2px 4px 0;}
+
+  .actions{display:flex;gap:10px;margin:20px 0 4px;}
+  .actions .gh{flex:none;width:56px;border-radius:14px;border:1px solid var(--line);background:#fff;font-size:20px;color:var(--gray);cursor:pointer;}
+  .actions .gh:hover{background:var(--soft);}
+  .actions .mn{flex:1;border:none;border-radius:14px;background:var(--accent);color:#fff;font-family:inherit;
+    font-weight:800;font-size:15.5px;padding:16px;letter-spacing:-.02em;cursor:pointer;}
+  .actions .mn:hover{background:var(--accent-d);}
+
+  .gate{border:1px solid var(--line);border-radius:18px;padding:30px 20px;text-align:center;background:var(--soft2);margin:6px 0;}
+  .gate .lk{width:46px;height:46px;border-radius:14px;background:#fff;border:1px solid var(--line);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--gray);}
+  .gate h3{font-size:16px;font-weight:800;}
+  .gate p{font-size:13px;color:var(--gray);margin:5px 0 16px;}
+  .gate .start{border:none;background:var(--accent);color:#fff;font-family:inherit;font-weight:800;font-size:14.5px;padding:13px 22px;border-radius:13px;display:inline-flex;align-items:center;gap:8px;cursor:pointer;}
+
+  /* 대시보드 */
+  .total-h{padding:12px 2px 20px;}
+  .total-h .hi{font-size:14px;color:var(--gray);font-weight:700;}
+  .total-h .tv{font-size:38px;font-weight:800;letter-spacing:-.045em;margin-top:4px;}
+  .total-h .pl{font-size:15px;font-weight:700;color:var(--up);margin-top:5px;}
+  .seg{display:flex;gap:4px;background:var(--soft);border-radius:14px;padding:5px;margin-bottom:18px;}
+  .seg span{flex:1;text-align:center;font-size:13px;font-weight:700;color:var(--gray);padding:10px;border-radius:10px;cursor:pointer;}
+  .seg span.on{background:#fff;color:var(--ink);box-shadow:0 1px 5px rgba(25,31,40,.10);}
+  .hold{display:flex;align-items:center;gap:12px;padding:16px 2px;border-bottom:1px solid var(--soft);}
+  .hold:last-child{border-bottom:none;}
+  .hold .nm{font-size:15px;font-weight:800;}
+  .hold .sub{font-size:12.5px;color:var(--gray);margin-top:2px;}
+  .hold .rt{margin-left:auto;text-align:right;}
+  .hold .rt .v{font-size:15px;font-weight:800;}
+  .hold .rt .p{font-size:13px;font-weight:700;color:var(--up);margin-top:2px;}
+  .hold .rt .p.dn{color:var(--down);}
+</style>
+</head>
+<body>
+
+  <div class="ph">
+    <h1>주식도 <span style="color:#6C5CE7">AI</span> · 새 디자인 시안</h1>
+    <p>밝은 회색 버튼 · 바이올렛 포인트 CTA · 로고 심볼/종목 아이콘 제거 · 더 화사하게. (모양만 보는 시안)</p>
+  </div>
+
+  <div class="pal">
+    <h4>제안 색 팔레트</h4>
+    <div class="sw">
+      <div class="chip"><div class="dot" style="background:#6C5CE7"></div>포인트(CTA) 바이올렛</div>
+      <div class="chip"><div class="dot" style="background:#F0EEFF"></div>연보라(활성탭·배지)</div>
+      <div class="chip"><div class="dot" style="background:#F2F4F6"></div>밝은 회색 버튼</div>
+      <div class="chip"><div class="dot" style="background:#F04452"></div>상승 빨강</div>
+      <div class="chip"><div class="dot" style="background:#3182F6"></div>하락 파랑</div>
+      <div class="chip"><div class="dot" style="background:#191F28"></div>잉크(글자)</div>
+      <div class="chip"><div class="dot" style="background:#FFFFFF"></div>흰 배경</div>
+    </div>
+  </div>
+
+  <!-- 종목 분석 -->
+  <div class="seclbl">📈 종목 분석 결과</div>
+  <div class="app">
+    <div class="top">
+      <div class="wordmark">주식도 <span class="ai">AI</span></div>
+      <button class="login"><span class="gg"></span>구글로 로그인</button>
+    </div>
+    <div class="tabs">
+      <span class="tab">이슈 종목</span>
+      <span class="tab on">종목 분석</span>
+      <span class="tab">리포트<span class="soon">예정</span></span>
+      <span class="tab">내 주식 보기</span>
+    </div>
+    <div class="body">
+      <div class="price-h">
+        <div class="nm">카카오 · 035720</div>
+        <div class="pv">149,000원</div>
+        <div class="ch">▲ 500원 (0.3%)<span class="mk">장 종료 · 종가 기준</span></div>
+      </div>
+
+      <div class="verdict">
+        <span class="bg">적정가</span>
+        <span class="tx">PER 138배로 이익 대비 비싼 편이에요. 다만 예상 PER은 낮아져 앞으로 이익이 늘 거란 기대가 담겨 있어요.</span>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <h3>투자 정보<span class="when">19:03 기준</span></h3>
+          <div class="kv"><span class="k">PER (주가÷이익)</span><span class="v">138배</span></div>
+          <div class="kv"><span class="k">예상 PER</span><span class="v">42배</span></div>
+          <div class="kv"><span class="k">PBR (주가÷순자산)</span><span class="v">8.3배</span></div>
+          <div class="kv"><span class="k">EPS (주당순이익)</span><span class="v">1,080원</span></div>
+        </div>
+        <div class="card">
+          <h3>영업이익 3개년 추세</h3>
+          <div class="trend">
+            <div class="yr"><div class="y">2022</div><div class="a">5,800억</div></div>
+            <div class="yr"><div class="y">2023</div><div class="a dn">5,019억</div></div>
+            <div class="yr"><div class="y">2024</div><div class="a">5,930억</div></div>
+          </div>
+          <div class="kv" style="margin-top:8px"><span class="k">방향</span><span class="v">주춤했다 회복 중</span></div>
+        </div>
+      </div>
+
+      <div class="note">
+        <div class="lbl"><span class="ic">✎</span>주식도AI 한마디</div>
+        <div class="txt">이익은 작년에 한 번 주춤했다가 다시 회복 중이에요. PER이 높은 건 "앞으로 더 벌 것"이란 기대가 가격에 미리 들어가 있다는 뜻이라, 기대가 깨지면 출렁일 수 있어요.</div>
+      </div>
+
+      <div class="disc"><b>참고용이에요.</b> 종가 기준이고 실시간이 아니며, 투자 권유가 아닌 공부용 정보예요. 실제 수치는 DART·증권사에서 다시 확인하세요.</div>
+
+      <div class="actions">
+        <button class="gh">♡</button>
+        <button class="mn">내 주식에 추가하기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 내 주식 보기 -->
+  <div class="seclbl">📊 내 주식 보기 (로그인 후)</div>
+  <div class="app">
+    <div class="top">
+      <div class="wordmark">주식도 <span class="ai">AI</span></div>
+      <div class="avatar">유</div>
+    </div>
+    <div class="tabs">
+      <span class="tab">이슈 종목</span>
+      <span class="tab">종목 분석</span>
+      <span class="tab">리포트<span class="soon">예정</span></span>
+      <span class="tab on">내 주식 보기</span>
+    </div>
+    <div class="body">
+      <div class="total-h">
+        <div class="hi">유정님의 평가금액</div>
+        <div class="tv">3,482,000원</div>
+        <div class="pl">▲ 108,000원 (+3.2%)</div>
+      </div>
+
+      <div class="seg"><span class="on">내 잔고</span><span>매매 기록</span><span>포트폴리오 조언</span><span>내 투자 유형</span></div>
+
+      <div class="card">
+        <div class="hold">
+          <div><div class="nm">카카오</div><div class="sub">12주 · 평단 138,000원</div></div>
+          <div class="rt"><div class="v">1,788,000원</div><div class="p">+8.0%</div></div>
+        </div>
+        <div class="hold">
+          <div><div class="nm">삼성전자</div><div class="sub">20주 · 평단 71,000원</div></div>
+          <div class="rt"><div class="v">1,420,000원</div><div class="p dn">-1.4%</div></div>
+        </div>
+        <div class="hold">
+          <div><div class="nm">네이버</div><div class="sub">3주 · 평단 188,000원</div></div>
+          <div class="rt"><div class="v">274,000원</div><div class="p">+2.1%</div></div>
+        </div>
+      </div>
+
+      <div class="note">
+        <div class="lbl"><span class="ic">✎</span>주식도AI 한마디</div>
+        <div class="txt">균형 투자형이신데, 지금 IT·플랫폼 한 곳에 70%가 몰려 있어요. 한 업종이 흔들리면 전체가 같이 흔들릴 수 있다는 점만 기억해두세요. (조언일 뿐, 매수·매도 권유는 아니에요)</div>
+      </div>
+
+      <div class="disc"><b>참고용이에요.</b> 입력하신 평단·수량 기준으로 계산했고, 실제 잔고는 증권사 앱에서 확인하세요.</div>
+    </div>
+  </div>
+
+</body>
+</html>

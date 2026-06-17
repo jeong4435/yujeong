@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>주식도 AI · 내비게이션 시안</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#EBF0E8; --paper:#FBFCFA; --ink:#1C2B26; --muted:#5E6B64;
+    --teal:#0F8B7A; --teal-d:#0A6357; --coral:#DD5A42; --coral-d:#B23E2B;
+    --amber:#FFD66B; --line:#D7DED3; --shadow:rgba(28,43,38,.10);
+  }
+  body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--ink);
+    line-height:1.55;letter-spacing:-.01em;-webkit-font-smoothing:antialiased;padding:24px 14px 60px;}
+  .page-h{max-width:880px;margin:0 auto 22px;}
+  .page-h h1{font-size:22px;font-weight:800;letter-spacing:-.03em;}
+  .page-h p{color:var(--muted);font-size:14px;margin-top:6px;}
+  .frames{max-width:880px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+  @media(max-width:760px){.frames{grid-template-columns:1fr;}}
+  .state-label{font-size:13px;font-weight:800;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+  .state-label .dot{width:9px;height:9px;border-radius:50%;background:var(--muted);}
+  .state-label.on .dot{background:var(--teal);}
+
+  .app{background:var(--paper);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:0 6px 22px var(--shadow);}
+
+  /* header */
+  .app-top{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);}
+  .brand{display:flex;align-items:center;gap:9px;}
+  .logo{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--teal),var(--teal-d));
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px;
+    box-shadow:0 4px 12px rgba(15,139,122,.35);}
+  .brand b{font-size:17px;font-weight:800;letter-spacing:-.03em;}
+  .brand b .br{color:var(--teal);}
+
+  .login-btn{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;
+    color:var(--ink);font-family:inherit;font-weight:700;font-size:13px;padding:8px 13px;border-radius:11px;cursor:pointer;}
+  .login-btn:hover{border-color:var(--teal);color:var(--teal);}
+  .gicon{width:15px;height:15px;}
+  .profile{display:flex;align-items:center;gap:7px;cursor:pointer;}
+  .avatar{width:32px;height:32px;border-radius:50%;background:#EBF7F3;border:1px solid #Bfe3da;
+    color:var(--teal-d);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;}
+  .caret{color:var(--muted);font-size:12px;}
+
+  /* tabs */
+  .tabs{display:flex;gap:6px;padding:12px 14px;background:#F2F6EF;flex-wrap:wrap;}
+  .tab{font-size:13px;font-weight:700;color:var(--muted);padding:8px 13px;border-radius:999px;border:1px solid transparent;}
+  .tab.on{background:var(--ink);color:#fff;}
+  .tab.ghost{border-color:var(--line);background:#fff;}
+  .tab .soon{font-size:10.5px;opacity:.6;margin-left:3px;}
+  .tab.right{margin-left:auto;display:flex;align-items:center;gap:5px;}
+
+  /* body */
+  .app-body{padding:18px 16px 22px;min-height:230px;}
+  .hint{font-size:12px;color:#9aa79f;margin-bottom:10px;}
+
+  .gate{border:1.5px dashed #c3cdbf;border-radius:16px;padding:26px 18px;text-align:center;background:#fff;}
+  .gate .lk{font-size:26px;}
+  .gate h3{font-size:15px;font-weight:800;margin:8px 0 4px;}
+  .gate p{font-size:13px;color:var(--muted);margin-bottom:14px;}
+  .gate .login-btn{display:inline-flex;background:var(--teal);color:#fff;border-color:var(--teal);}
+  .gate .login-btn:hover{background:var(--teal-d);}
+
+  .subnav{display:flex;gap:7px;flex-wrap:wrap;padding-bottom:13px;border-bottom:1px solid var(--line);margin-bottom:14px;}
+  .sub{font-size:12.5px;font-weight:700;padding:6px 11px;border-radius:10px;color:var(--muted);border:1px solid var(--line);background:#fff;}
+  .sub.on{background:#EBF7F3;border-color:#Bfe3da;color:var(--teal-d);}
+
+  .cards2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .mini{background:#F2F6EF;border-radius:12px;padding:13px;}
+  .mini .k{font-size:12px;color:var(--muted);}
+  .mini .v{font-size:16px;font-weight:800;margin-top:3px;}
+  .mini .v.up{color:var(--teal-d);}
+
+  .note{position:relative;background:#FFF8E3;border:1px dashed #E8C868;border-radius:12px;
+    padding:13px 13px 13px 44px;margin-top:14px;}
+  .note::before{content:'✎';position:absolute;left:14px;top:12px;font-size:18px;color:var(--coral);}
+  .note .lbl{font-weight:800;font-size:12px;color:var(--coral-d);}
+  .note .txt{font-size:12.5px;color:#3a3327;margin-top:3px;line-height:1.55;}
+
+  .legend{max-width:880px;margin:26px auto 0;background:var(--paper);border:1px solid var(--line);
+    border-radius:16px;padding:18px 20px;}
+  .legend h4{font-size:14px;font-weight:800;margin-bottom:10px;}
+  .legend li{font-size:13.5px;color:#34423c;margin:7px 0 7px 4px;list-style:none;padding-left:18px;position:relative;line-height:1.55;}
+  .legend li::before{content:'›';position:absolute;left:0;color:var(--teal);font-weight:800;}
+  .legend b{color:var(--ink);}
+</style>
+</head>
+<body>
+
+  <div class="page-h">
+    <h1>주식도 <span style="color:#0F8B7A">AI</span> · 내비게이션 시안</h1>
+    <p>로그인 선택제 기준. 왼쪽 = 비로그인 화면, 오른쪽 = 로그인 화면. (실제 동작 아님, 모양만 보는 시안)</p>
+  </div>
+
+  <div class="frames">
+
+    <!-- 비로그인 -->
+    <div>
+      <div class="state-label"><span class="dot"></span>비로그인 — 누구나 보는 화면</div>
+      <div class="app">
+        <div class="app-top">
+          <div class="brand"><div class="logo">株</div><b>주식도 <span class="br">AI</span></b></div>
+          <button class="login-btn">
+            <svg class="gicon" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.4 29.3 35 24 35c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.2-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 5.1 29.6 3 24 3 16 3 9.1 7.6 6.3 14.7z"/><path fill="#4CAF50" d="M24 45c5.2 0 9.9-2 13.5-5.2l-6.2-5.3C29.2 35.7 26.7 36.5 24 36.5c-5.3 0-9.7-2.6-11.3-7l-6.5 5C9.1 41.6 16 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.5l6.2 5.3C39.9 36 44 30.6 44 24c0-1.2-.1-2.3-.4-3.5z"/></svg>
+            구글로 로그인
+          </button>
+        </div>
+        <div class="tabs">
+          <span class="tab on">🔥 이슈 종목</span>
+          <span class="tab">📈 종목 분석</span>
+          <span class="tab">📰 리포트<span class="soon">예정</span></span>
+          <span class="tab">📊 내 주식 보기</span>
+        </div>
+        <div class="app-body">
+          <div class="hint">「내 주식 보기」 탭을 누르면 ↓</div>
+          <div class="gate">
+            <div class="lk">🔒</div>
+            <h3>로그인하면 내 투자가 보여요</h3>
+            <p>내 잔고 · 매매 기록 · 투자 성향 · 포트폴리오 조언</p>
+            <button class="login-btn">
+              <svg class="gicon" viewBox="0 0 48 48"><path fill="#fff" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.4 29.3 35 24 35c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.2-.1-2.3-.4-3.5z"/></svg>
+              구글로 시작하기
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 로그인 -->
+    <div>
+      <div class="state-label on"><span class="dot"></span>로그인 — 「내 주식 보기」 허브가 열림</div>
+      <div class="app">
+        <div class="app-top">
+          <div class="brand"><div class="logo">株</div><b>주식도 <span class="br">AI</span></b></div>
+          <div class="profile"><div class="avatar">유</div><span class="caret">▾</span></div>
+        </div>
+        <div class="tabs">
+          <span class="tab">🔥 이슈 종목</span>
+          <span class="tab">📈 종목 분석</span>
+          <span class="tab">📰 리포트<span class="soon">예정</span></span>
+          <span class="tab on">📊 내 주식 보기</span>
+        </div>
+        <div class="app-body">
+          <div class="subnav">
+            <span class="sub">내 잔고</span>
+            <span class="sub">매매 기록</span>
+            <span class="sub">포트폴리오 조언</span>
+            <span class="sub on">내 투자 유형</span>
+          </div>
+          <div class="cards2">
+            <div class="mini"><div class="k">내 투자 유형</div><div class="v">균형 투자형</div></div>
+            <div class="mini"><div class="k">평가 손익</div><div class="v up">+3.2%</div></div>
+          </div>
+          <div class="note">
+            <div class="lbl">주식도AI 한마디</div>
+            <div class="txt">균형 투자형이시네요. 종목 분석을 보면 "🧭 내 유형에게" 맞춤 한마디가 함께 떠요.</div>
+          </div>
+          <div class="hint" style="margin-top:14px;">Phase 1은 「내 투자 유형」까지만 — 잔고·기록·조언 칸은 자리만 잡아두고 추후 채움.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="legend">
+    <h4>이 구조의 핵심 3가지</h4>
+    <ul>
+      <li><b>로그인 버튼 = 우상단 고정.</b> 로그아웃이면 「구글로 로그인」, 로그인이면 프로필(이니셜)+드롭다운.</li>
+      <li><b>상단 탭은 카테고리만.</b> 잔고·기록·조언을 탭으로 늘리지 않음 → 모바일에서도 안 터짐.</li>
+      <li><b>「내 주식 보기」 = 로그인 게이트 + 허브.</b> 개인 기능이 늘어도 전부 이 안에서 하위 메뉴로 확장.</li>
+    </ul>
+  </div>
+
+</body>
+</html>

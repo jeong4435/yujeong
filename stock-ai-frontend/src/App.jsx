@@ -19,16 +19,15 @@ export default function App() {
       <div className="sa-wrap">
         <div className="sa-top">
           <div className="sa-brand">
-            <div className="sa-logo">株</div>
-            <h1>주식도 <span className="br">AI</span></h1>
+            <h1 className="sa-wordmark" onClick={() => setTab("issue")}>주식도 <span className="br">AI</span></h1>
           </div>
           <div className="sa-tag">DART·KRX에서 가져온 진짜 데이터를, 쉽게 풀어드려요.</div>
         </div>
 
         <div className="sa-tabs">
-          <button className={"sa-tab" + (tab === "issue" ? " on" : "")} onClick={() => setTab("issue")}>🔥 이슈 종목</button>
-          <button className={"sa-tab" + (tab === "stock" ? " on" : "")} onClick={() => setTab("stock")}>📈 종목 분석</button>
-          <button className={"sa-tab" + (tab === "type" ? " on" : "")} onClick={() => setTab("type")}>🧭 내 유형{userType ? " ✓" : ""}</button>
+          <button className={"sa-tab" + (tab === "issue" ? " on" : "")} onClick={() => setTab("issue")}>이슈 종목</button>
+          <button className={"sa-tab" + (tab === "stock" ? " on" : "")} onClick={() => setTab("stock")}>종목 분석</button>
+          <button className={"sa-tab" + (tab === "type" ? " on" : "")} onClick={() => setTab("type")}>내 유형{userType ? " ✓" : ""}</button>
         </div>
 
         {tab === "issue" && <IssueBoard cache={issueCache} setCache={setIssueCache} onPick={pickStock} />}
