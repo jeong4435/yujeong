@@ -13,6 +13,22 @@ except Exception:
 MODEL = "gemini-1.5-flash-latest"
 
 
+def list_models():
+    """진단용: 이 API 키로 generateContent 가능한 모델 목록 반환."""
+    key = os.environ.get("GEMINI_API_KEY")
+    if not key or genai is None:
+        return {"error": "no key or library"}
+    try:
+        genai.configure(api_key=key)
+        out = []
+        for m in genai.list_models():
+            if "generateContent" in getattr(m, "supported_generation_methods", []):
+                out.append(m.name)
+        return {"models": out}
+    except Exception as e:
+        return {"error": f"{type(e).__name__}: {str(e)[:300]}"}
+
+
 def _build_prompt(data: dict) -> str:
     name = data.get("name", "")
     code = data.get("code", "")
