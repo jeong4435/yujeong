@@ -30,13 +30,13 @@ cd stock-ai-frontend && npm install && npm run dev   # :5173
 - `app/dart.py` — **DART REST 직접호출**(corpCode.xml→기업코드 dict, fnlttSinglAcntAll.json→3년재무, list.json→공시). ※ OpenDartReader 제거됨(메모리 문제로 교체)
 - `app/news.py` — 네이버 종목 뉴스(최근 3개월).
 - `app/cache.py` — 메모리 TTL 캐시(시세120s/PER600s/뉴스3600s/공시21600s/재무43200s, 빈값 미캐시).
-- `app/explain.py` — (선택) Anthropic. `ANTHROPIC_API_KEY` 없으면 None.
+- `app/explain.py` — **Gemini 종합 분석**(`GEMINI_API_KEY` 있을 때만, 없으면 None). 모델은 `MODEL_CANDIDATES` 우선순위로 자동 폴백(현재 `gemini-2.5-flash` 작동, 1.5 시리즈는 2025년 은퇴). 밸류에이션·펀더멘털·이슈·종합 4개 섹션(`▌`구분) 구조화 분석. 재무·공시·뉴스를 프롬프트에 통합. **직접 매수/매도 권유 금지**(데이터 근거만 제시).
 - **원칙: 모든 외부 호출 try/except → 빈 값. 절대 500으로 죽지 않게.** 스레드 병렬화는 라이브러리 경합으로 역효과(순차 유지).
 - `.env` 에 `DART_API_KEY` (gitignore). 커밋 금지. 배포 환경변수는 Render에 등록됨.
 
 ## 프론트엔드 (React 18 + Vite)
 - `src/App.jsx` — 탭 3개: 🔥이슈종목 / 📈종목분석 / 🧭내유형
-- `src/components/Analyzer.jsx` — 점진적 로딩: `/api/stock`(가격·PER) 먼저 렌더 → `/api/details`(3년재무표·공시·뉴스)·설명은 비동기로 뒤에 채움
+- `src/components/Analyzer.jsx` — 점진적 로딩: `/api/stock`(가격·PER) 먼저 렌더 → `/api/details`(3년재무표·공시·뉴스)·**AI 분석**은 비동기로 뒤에 채움. AI 분석은 가격 카드 아래 전용 카드(`sa-analysis`)로 표시, `▌`로 4개 섹션 파싱(`parseAnalysis`)
 - `src/api.js` — `VITE_API_BASE`로 백엔드 주소 분리(개발은 비워두면 vite proxy)
 - `src/components/IssueBoard.jsx` — trending 카드. 클릭 → 분석 탭으로 종목 전달(`pendingQuery`)
 - `src/components/Quiz.jsx` + `src/quizData.js` — 투자유형 테스트(서버 불필요). **KOFIA 표준 체계**: 7문항(위험감내·기간·연령·경험·투자자금비중·목적·집중도) **가중치 적용 가중평균 0~100점** → 표준 컷오프(20/40/60/80) → **5등급**(안정형·안정추구형·위험중립형·적극투자형·공격투자형). ※ 등급·구간은 KOFIA 표준, 세부 배점은 표준 틀 기반 대표값(교육용). `computeScore()`·`getType()`
@@ -69,5 +69,13 @@ cd stock-ai-frontend && npm install && npm run dev   # :5173
 - DART 키가 작업 중 채팅에 노출된 이력 → 신경 쓰이면 재발급 후 Render 환경변수 교체.
 - ※ `npm run build`·메모리(OOM)·pykrx/OpenDartReader 이슈는 모두 해결됨(`PROJECT-STATUS.md` 5번 참고).
 
+## 앱의 핵심 3요소 (사용자가 "꼭 기억" 강조 — 2026-06-17)
+1. **종목 정보 취합** — 시세·PER·재무·공시·뉴스 (현재 잘 되고 있음)
+2. **AI 분석·조언** — 시장·섹터·개별종목 분석. ← **가장 중요한 차별점.** Gemini 연결 완료(`explain.py`), 계속 고도화 대상.
+3. **로그인 시 개인 포트폴리오** — 보유종목·매매기록·AI 조언 (천천히 개발)
+
+→ **우선순위 재조정(2026-06-17)**: 기존 "인프라(로그인·DB) 먼저" → **"핵심 가치(2번 AI 분석) 먼저"** 로 변경. AI 분석이 좋아져야 로그인할 동기가 생김. Supabase/로그인은 그 다음.
+
 ## 앞으로의 계획
-**`PROJECT-STATUS.md`의 [별첨] 로드맵 참고.** 요약: 8개 희망 기능은 대부분 **로그인+DB(현재 없음)** 토대가 필요 → **Phase 1 = Supabase(구글로그인+DB) + 내 유형 저장→멘트 개인화**부터 시작 예정. "작은 것부터, 우선순위별로." AI(Anthropic) 도입은 우선순위 낮음.
+**`PROJECT-STATUS.md`의 [별첨] 로드맵 참고.** 요약: ① **AI 분석 고도화(최우선, 진행중)** → ② 공개 리포트 소스 조사 → ③ Supabase(로그인+DB) → ④ 개인 포트폴리오. "작은 것부터, 우선순위별로."
+- **AI = Gemini**(`gemini-2.5-flash`, 무료 티어). 모델명은 `MODEL_CANDIDATES` 자동 폴백. `GEMINI_API_KEY`는 Render 환경변수. (Anthropic은 비용 때문에 미채택)
