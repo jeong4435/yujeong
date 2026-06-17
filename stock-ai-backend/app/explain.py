@@ -10,7 +10,7 @@ try:
 except Exception:
     genai = None
 
-MODEL = "gemini-2.0-flash"
+MODEL = "gemini-1.5-flash"
 
 
 def _build_prompt(data: dict) -> str:
@@ -104,5 +104,5 @@ def explain(data: dict):
         model = genai.GenerativeModel(MODEL)
         response = model.generate_content(_build_prompt(data))
         return response.text
-    except Exception as e:
-        return f"(분석 생성 실패: {e})"
+    except Exception:
+        return None
