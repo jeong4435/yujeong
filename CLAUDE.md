@@ -1,6 +1,10 @@
 # 주식도 AI (jusikdo-ai)
 
-한국 주식을 **고등학생 눈높이**로 풀어주는 학습 도우미 웹앱. claude.ai 대화에서 바이브코딩으로 시작된 프로젝트이며, 전체 맥락은 `HANDOFF.md` 참고.
+한국 주식을 **고등학생 눈높이**로 풀어주는 학습 도우미 웹앱.
+
+> **📌 먼저 `PROJECT-STATUS.md`를 읽으세요.** 현재 배포 상태·아키텍처·세션 히스토리·앞으로의 계획(로드맵)이 모두 거기 정리돼 있습니다. (`HANDOFF.md`는 최초 claude.ai 시작 맥락)
+>
+> **이미 무료로 실배포됨**: 앱 https://jusikdo-ai.vercel.app · 백엔드 https://jusikdo-ai-backend.onrender.com · 깃허브 https://github.com/jeong4435/yujeong · 업데이트는 `git push`로 자동 재배포.
 
 ## 구조
 ```
@@ -20,17 +24,20 @@ cd stock-ai-frontend && npm install && npm run dev   # :5173
 ```
 원클릭 스크립트: `start-backend.{bat,sh}`, `start-frontend.{bat,sh}`
 
-## 백엔드 (Python 3.10+)
-- `app/main.py` — 엔드포인트: `/api/stock/{query}`(종목 데이터), `/api/analyze/{query}`(+설명), `/api/explain/{query}`(설명만), `/api/trending`(KRX 거래대금 상위·급등·급락), `/api/health`
-- `app/market.py` — FinanceDataReader(시세·거래량·등락률·종목명↔코드), pykrx(PER/PBR/EPS, trending). KRX 종목목록은 `lru_cache`.
-- `app/dart.py` — OpenDartReader. 최근 6개월 공시, 사업보고서 재무(연결 CFS 우선, 당해 없으면 전년도 폴백).
-- `app/explain.py` — (선택) Anthropic API로 진짜 숫자를 쉬운 말로 설명. `ANTHROPIC_API_KEY` 없으면 None 반환.
-- **원칙: 모든 외부 호출은 try/except로 감싸 빈 값 반환. 절대 500으로 죽지 않게.**
-- `.env` 에 `DART_API_KEY` (gitignore 처리됨). 커밋 금지.
+## 백엔드 (Python 3.12)
+- `app/main.py` — 엔드포인트: `/api/stock/{q}`(**1차 빠름**: 시세·PER·밸류해설), `/api/details/{q}`(**2차 느림**: 3년재무·공시·뉴스), `/api/analyze`(+설명), `/api/explain`(설명만), `/api/trending`, `/api/health`. startup에서 KRX목록·DART기업코드 prewarm.
+- `app/market.py` — FinanceDataReader(시세·등락률·종목명↔코드·trending), **네이버 금융**(PER/PBR/EPS/예상PER), `value_analysis`(밸류 해설). KRX 목록은 `lru_cache`. ※ pykrx 제거됨
+- `app/dart.py` — **DART REST 직접호출**(corpCode.xml→기업코드 dict, fnlttSinglAcntAll.json→3년재무, list.json→공시). ※ OpenDartReader 제거됨(메모리 문제로 교체)
+- `app/news.py` — 네이버 종목 뉴스(최근 3개월).
+- `app/cache.py` — 메모리 TTL 캐시(시세120s/PER600s/뉴스3600s/공시21600s/재무43200s, 빈값 미캐시).
+- `app/explain.py` — (선택) Anthropic. `ANTHROPIC_API_KEY` 없으면 None.
+- **원칙: 모든 외부 호출 try/except → 빈 값. 절대 500으로 죽지 않게.** 스레드 병렬화는 라이브러리 경합으로 역효과(순차 유지).
+- `.env` 에 `DART_API_KEY` (gitignore). 커밋 금지. 배포 환경변수는 Render에 등록됨.
 
 ## 프론트엔드 (React 18 + Vite)
 - `src/App.jsx` — 탭 3개: 🔥이슈종목 / 📈종목분석 / 🧭내유형
-- `src/components/Analyzer.jsx` — 숫자 먼저 렌더, 설명(`/api/explain`)은 비동기로 뒤에 채움
+- `src/components/Analyzer.jsx` — 점진적 로딩: `/api/stock`(가격·PER) 먼저 렌더 → `/api/details`(3년재무표·공시·뉴스)·설명은 비동기로 뒤에 채움
+- `src/api.js` — `VITE_API_BASE`로 백엔드 주소 분리(개발은 비워두면 vite proxy)
 - `src/components/IssueBoard.jsx` — trending 카드. 클릭 → 분석 탭으로 종목 전달(`pendingQuery`)
 - `src/components/Quiz.jsx` + `src/quizData.js` — 투자유형 진단(서버 불필요). 5문항 합산 5~15점 → 4유형
 - `src/styles.css` — 디자인 토큰. 변경 시 여기만 수정
@@ -48,13 +55,13 @@ cd stock-ai-frontend && npm install && npm run dev   # :5173
 4. AI 설명(`explain.py`)은 받은 숫자를 절대 바꾸지 않도록 프롬프트에 명시되어 있음 — 유지할 것
 
 ## 알려진 한계 / 주의
-- 시세는 종가 기준(실시간 아님). 실시간이 필요하면 증권사 API(KIS·키움) 별도 연동 필요
-- 첫 조회 5~10초(KRX 종목목록 로딩), `/api/trending` 10~20초(전 종목 수집·정렬)
-- 일부 종목(신규상장·우선주·스팩)은 DART 재무/공시가 빈 값일 수 있음 — 정상 동작
-- yfinance/네이버 계열 소스는 비공식이라 간헐적 실패 가능 — 빈 값 폴백이 설계 의도
-- frontend는 `npm run build` 전체 빌드가 아직 한 번도 실행 안 됨(이전 환경 제약). 첫 빌드 시 오류 나오면 우선 수정 대상
+- **Render 무료 콜드스타트**: 15분 미사용 시 잠듦 → 첫 조회 50초+. cron-job.org가 10분마다 `/api/health` 핑으로 완화.
+- 시세는 종가 기준(실시간 아님). 실시간은 KIS 등 증권사 API 별도 연동(로드맵 ⑦).
+- 캐시 후 재조회는 즉시(0.2초). 첫 조회만 외부 호출 시간.
+- 일부 종목(신규상장·우선주·스팩)은 DART 재무/공시 빈 값 가능 — 정상(폴백).
+- 네이버 계열 소스는 비공식 — 간헐적 실패 시 빈 값 폴백(설계 의도).
+- DART 키가 작업 중 채팅에 노출된 이력 → 신경 쓰이면 재발급 후 Render 환경변수 교체.
+- ※ `npm run build`·메모리(OOM)·pykrx/OpenDartReader 이슈는 모두 해결됨(`PROJECT-STATUS.md` 5번 참고).
 
-## 다음 후보 작업 (대화에서 논의됨)
-- 영업이익 3개년 추세 그래프
-- 이슈 종목에 "왜 올랐나" 뉴스 한 줄
-- 실시간 시세(증권사 API) 연동
+## 앞으로의 계획
+**`PROJECT-STATUS.md`의 [별첨] 로드맵 참고.** 요약: 8개 희망 기능은 대부분 **로그인+DB(현재 없음)** 토대가 필요 → **Phase 1 = Supabase(구글로그인+DB) + 내 유형 저장→멘트 개인화**부터 시작 예정. "작은 것부터, 우선순위별로." AI(Anthropic) 도입은 우선순위 낮음.
