@@ -104,5 +104,5 @@ def explain(data: dict):
         model = genai.GenerativeModel(MODEL)
         response = model.generate_content(_build_prompt(data))
         return response.text
-    except Exception:
-        return None
+    except Exception as e:
+        return f"[DEBUG] {type(e).__name__}: {str(e)[:300]}"
