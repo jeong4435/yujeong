@@ -145,7 +145,7 @@ def health():
     return {
         "ok": True,
         "dart_key_loaded": bool(os.environ.get("DART_API_KEY")),
-        "explain_enabled": bool(os.environ.get("ANTHROPIC_API_KEY")),
+        "explain_enabled": bool(os.environ.get("GEMINI_API_KEY")),
     }
 
 

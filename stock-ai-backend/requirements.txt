@@ -4,4 +4,4 @@ python-dotenv
 finance-datareader
 requests
 lxml
-anthropic
+google-generativeai

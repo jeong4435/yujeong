@@ -29,6 +29,17 @@ function trendComment(t) {
   else if (op === "down" || op === "mixed_down") tail = " 버는 힘이 약해지고 있어, 왜 그런지 같이 봐야 해요.";
   return (head + tail).trim();
 }
+// Gemini 분석 텍스트 파싱 (▌섹션 구분자)
+function parseAnalysis(text) {
+  if (!text) return [];
+  return text.split(/▌/).filter(Boolean).map((part) => {
+    const nl = part.indexOf("\n");
+    return nl === -1
+      ? { label: part.trim(), text: "" }
+      : { label: part.slice(0, nl).trim(), text: part.slice(nl).trim() };
+  });
+}
+
 // 'YYYYMMDD' 또는 'YYYY-MM-DD' → 'YYYY.MM.DD'
 function fmtDate(s) {
   if (!s) return "";
@@ -155,14 +166,33 @@ export default function Analyzer({ initialQuery, onConsumed }) {
               {data.as_of && <span style={{ color: "var(--muted)" }}> · 🕒 {data.as_of} 종가</span>}
             </div>
 
-            {explLoading && <div className="sa-explain-off">🧑‍🏫 쉬운 설명 만드는 중…</div>}
-            {explanation && (
-              <div className="sa-note">
-                <div className="lbl">주식도AI 한마디</div>
-                <div className="txt">{explanation}</div>
-              </div>
-            )}
           </div>
+
+          {explLoading && (
+            <div className="sa-card">
+              <div className="sa-analysis-loading">
+                <div className="sa-spin" />
+                <span>Gemini가 종합 분석 작성 중…</span>
+              </div>
+            </div>
+          )}
+          {explanation && (
+            <div className="sa-card">
+              <h3><span className="sa-chip">AI 분석</span> Gemini 종합 분석</h3>
+              <div className="sa-analysis">
+                {parseAnalysis(explanation).map((sec, i) => (
+                  <div key={i} className="sa-analysis-section">
+                    {i > 0 && <div className="sa-analysis-divider" />}
+                    <div className="sa-analysis-label">{sec.label}</div>
+                    <div className="sa-analysis-text">{sec.text}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="sa-disc" style={{ marginTop: 14 }}>
+                AI 분석은 수집된 공개 데이터 기반 참고 정보예요. 투자 결정 전 DART 원문·증권사 앱을 직접 확인하세요.
+              </div>
+            </div>
+          )}
 
           <div className="sa-card">
             <h3><span className="sa-chip">밸류</span> 지금 가격, 비싼 걸까 싼 걸까?</h3>
