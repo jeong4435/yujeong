@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { getStock, getDetails, getExplain, won, num, eok } from "../api.js";
+import { getStock, getDetails, getExplain, getExamples, won, num, eok } from "../api.js";
+import MyStocks from "./MyStocks.jsx";
+
+// 거래대금 TOP을 못 받아왔을 때 보여줄 기본 예시
+const FALLBACK_EXAMPLES = ["삼성전자", "SK하이닉스", "카카오", "현대차", "005930"];
 
 // 추세 방향 → 라벨/색/문장
 function trendLabel(dir) {
@@ -42,6 +46,12 @@ export default function Analyzer({ initialQuery, onConsumed }) {
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [error, setError] = useState("");
   const [last, setLast] = useState("");
+  const [examples, setExamples] = useState(FALLBACK_EXAMPLES);
+
+  // 예시 칩 = 전일 거래대금 TOP (실패하면 기본 목록 유지)
+  useEffect(() => {
+    getExamples().then((list) => { if (list && list.length) setExamples(list); });
+  }, []);
 
   // 이슈 종목 탭에서 넘어온 종목 자동 분석
   useEffect(() => {
@@ -87,27 +97,31 @@ export default function Analyzer({ initialQuery, onConsumed }) {
   return (
     <div>
       {!data && !loading && (
-        <div className="sa-card">
-          <div className="sa-hero">
-            진짜 데이터로, <span className="hl">쉽게</span><br />뜯어봐요
+        <>
+          <div className="sa-card">
+            <div className="sa-hero">
+              진짜 데이터로, <span className="hl">쉽게</span><br />뜯어봐요
+            </div>
+            <div className="sa-herosub">원하는 종목을 검색해주세요</div>
+            <div className="sa-searchrow">
+              <input
+                className="sa-input"
+                placeholder="예: 삼성전자  또는  005930"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && run()}
+              />
+              <button className="sa-btn" onClick={() => run()} disabled={!query.trim()}>분석</button>
+            </div>
+            <div className="sa-examples">
+              {examples.map((x) => (
+                <button key={x} className="sa-ex" onClick={() => { setQuery(x); run(x); }}>{x}</button>
+              ))}
+            </div>
           </div>
-          <div className="sa-herosub">DART·KRX에서 시세·거래량·PER·재무·공시를 직접 가져와요.</div>
-          <div className="sa-searchrow">
-            <input
-              className="sa-input"
-              placeholder="예: 삼성전자  또는  005930"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && run()}
-            />
-            <button className="sa-btn" onClick={() => run()} disabled={!query.trim()}>분석</button>
-          </div>
-          <div className="sa-examples">
-            {["삼성전자", "SK하이닉스", "카카오", "현대차", "005930"].map((x) => (
-              <button key={x} className="sa-ex" onClick={() => { setQuery(x); run(x); }}>{x}</button>
-            ))}
-          </div>
-        </div>
+
+          <MyStocks onPick={(name) => run(name)} />
+        </>
       )}
 
       {loading && (

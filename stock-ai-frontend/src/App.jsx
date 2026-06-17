@@ -27,7 +27,7 @@ export default function App() {
         <div className="sa-tabs">
           <button className={"sa-tab" + (tab === "issue" ? " on" : "")} onClick={() => setTab("issue")}>이슈 종목</button>
           <button className={"sa-tab" + (tab === "stock" ? " on" : "")} onClick={() => setTab("stock")}>종목 분석</button>
-          <button className={"sa-tab" + (tab === "type" ? " on" : "")} onClick={() => setTab("type")}>내 유형{userType ? " ✓" : ""}</button>
+          <button className={"sa-tab" + (tab === "type" ? " on" : "")} onClick={() => setTab("type")}>투자 유형 테스트{userType ? " ✓" : ""}</button>
         </div>
 
         {tab === "issue" && <IssueBoard cache={issueCache} setCache={setIssueCache} onPick={pickStock} />}

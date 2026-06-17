@@ -39,6 +39,18 @@ export async function getTrending() {
   return r.json();
 }
 
+// 종목 분석 예시 칩 = 전일 거래대금 TOP (하루 한 번 갱신). 실패 시 빈 배열 → 프론트 기본 목록 폴백.
+export async function getExamples() {
+  try {
+    const r = await fetch(api("/api/examples"));
+    if (!r.ok) return [];
+    const d = await r.json();
+    return Array.isArray(d.examples) ? d.examples : [];
+  } catch {
+    return [];
+  }
+}
+
 // 숫자 포맷
 export const won = (n) => (n == null ? "확인 어려움" : Number(n).toLocaleString("ko-KR") + "원");
 export const num = (n) => (n == null ? "확인 어려움" : Number(n).toLocaleString("ko-KR"));

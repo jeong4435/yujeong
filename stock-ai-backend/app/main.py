@@ -134,6 +134,12 @@ def trending():
     return market.trending()
 
 
+@app.get("/api/examples")
+def examples():
+    """종목 분석 검색창 아래 예시 칩 = 전일 거래대금 TOP (하루 한 번 갱신)."""
+    return market.example_tickers()
+
+
 @app.get("/api/health")
 def health():
     return {

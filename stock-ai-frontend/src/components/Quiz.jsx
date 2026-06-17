@@ -1,14 +1,14 @@
 import React, { useState } from "react";
-import { QUIZ, getType } from "../quizData.js";
+import { QUIZ, getType, computeScore } from "../quizData.js";
 
 export default function Quiz({ onResult, savedType }) {
   const [answers, setAnswers] = useState(Array(QUIZ.length).fill(null));
   const [done, setDone] = useState(!!savedType);
 
   const allAnswered = answers.every((a) => a !== null);
-  const score = answers.reduce((s, a) => s + (a || 0), 0);
+  const score = computeScore(answers);   // 가중평균 0~100
   const result = done ? (savedType || getType(score)) : null;
-  const pct = result ? Math.round(((score - 5) / 10) * 100) : 0;
+  const pct = result ? Math.max(0, Math.min(100, score)) : 0;
 
   function pick(qi, val) {
     const next = [...answers];
@@ -71,7 +71,7 @@ export default function Quiz({ onResult, savedType }) {
     <div>
       <div className="sa-card">
         <div className="sa-hero" style={{ fontSize: 22 }}>나는 어떤 <span className="hl">투자자</span>일까?</div>
-        <div className="sa-herosub">5개 질문에 답하면 내 투자 유형과 맞춤 매도 원칙을 알려드려요.</div>
+        <div className="sa-herosub">{QUIZ.length}개 질문에 답하면 내 투자 유형을 분석해줘요.</div>
       </div>
 
       {QUIZ.map((item, qi) => (

@@ -39,7 +39,7 @@ cd stock-ai-frontend && npm install && npm run dev   # :5173
 - `src/components/Analyzer.jsx` — 점진적 로딩: `/api/stock`(가격·PER) 먼저 렌더 → `/api/details`(3년재무표·공시·뉴스)·설명은 비동기로 뒤에 채움
 - `src/api.js` — `VITE_API_BASE`로 백엔드 주소 분리(개발은 비워두면 vite proxy)
 - `src/components/IssueBoard.jsx` — trending 카드. 클릭 → 분석 탭으로 종목 전달(`pendingQuery`)
-- `src/components/Quiz.jsx` + `src/quizData.js` — 투자유형 진단(서버 불필요). 5문항 합산 5~15점 → 4유형
+- `src/components/Quiz.jsx` + `src/quizData.js` — 투자유형 테스트(서버 불필요). **KOFIA 표준 체계**: 7문항(위험감내·기간·연령·경험·투자자금비중·목적·집중도) **가중치 적용 가중평균 0~100점** → 표준 컷오프(20/40/60/80) → **5등급**(안정형·안정추구형·위험중립형·적극투자형·공격투자형). ※ 등급·구간은 KOFIA 표준, 세부 배점은 표준 틀 기반 대표값(교육용). `computeScore()`·`getType()`
 - `src/styles.css` — 디자인 토큰. 변경 시 여기만 수정
 
 ## 디자인 시스템 (2026-06 새 디자인 — 토스증권 톤 참고)

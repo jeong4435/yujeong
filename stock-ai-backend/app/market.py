@@ -125,6 +125,19 @@ def trending(top: int = 5) -> dict:
     }
 
 
+@ttl_cache(43200)  # 전일 거래대금 TOP — 종가 데이터는 하루 한 번 갱신 → 12시간 캐시
+def example_tickers(n: int = 5) -> dict:
+    """종목 분석 검색창 아래 '예시 칩' = 전일 거래대금 상위 n개 종목명."""
+    d, df = _recent_ohlcv()
+    if df is None or len(df) == 0:
+        return {}  # 빈 값은 캐싱 안 됨(다음에 재시도) → 프론트는 기본 목록으로 폴백
+    top = df.sort_values("거래대금", ascending=False).head(n)
+    names = [str(r.get("Name", "")) for _, r in top.iterrows() if str(r.get("Name", ""))]
+    if not names:
+        return {}
+    return {"updated": f"{d} 종가 기준", "examples": names}
+
+
 def _parse_num(x):
     """'27.76배', '12,372원' 같은 문자열에서 숫자만 뽑아 float로."""
     try:

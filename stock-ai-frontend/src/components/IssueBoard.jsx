@@ -55,8 +55,12 @@ export default function IssueBoard({ cache, setCache, onPick }) {
         </div>
       )}
 
-      {cache?.groups?.map((g, gi) => (
-        <div key={gi}>
+      {cache?.groups?.map((g, gi) => {
+        const kind = g.label.includes("급등") ? "up" : g.label.includes("급락") ? "down" : "vol";
+        return (
+        <React.Fragment key={gi}>
+          {gi > 0 && <div className="sa-sec-line" />}
+          <div className={"sa-issue-section " + kind}>
           <div className="sa-group-h">
             <div className="gl">{g.label}</div>
             <div className="gd">{g.desc}</div>
@@ -81,8 +85,10 @@ export default function IssueBoard({ cache, setCache, onPick }) {
               </button>
             );
           })}
-        </div>
-      ))}
+          </div>
+        </React.Fragment>
+        );
+      })}
 
       {cache?.groups?.length ? (
         <div className="sa-disc">
