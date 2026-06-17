@@ -140,12 +140,6 @@ def examples():
     return market.example_tickers()
 
 
-@app.get("/api/_models")
-def _models():
-    """진단용(임시): 사용 가능한 Gemini 모델 목록."""
-    return explain.list_models()
-
-
 @app.get("/api/health")
 def health():
     return {
