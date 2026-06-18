@@ -25,11 +25,12 @@ cd stock-ai-frontend && npm install && npm run dev   # :5173
 원클릭 스크립트: `start-backend.{bat,sh}`, `start-frontend.{bat,sh}`
 
 ## 백엔드 (Python 3.12)
-- `app/main.py` — 엔드포인트: `/api/stock/{q}`(**1차 빠름**: 시세·PER·밸류해설), `/api/details/{q}`(**2차 느림**: 3년재무·공시·뉴스·애널리스트), `/api/analyze`(+설명), `/api/explain`(설명만), `/api/trending`, `/api/indices`(오늘의 시장 지수), `/api/market-analysis`(시황·섹터 AI), `/api/examples`, `/api/health`. startup에서 KRX목록·DART기업코드 prewarm.
+- `app/main.py` — 엔드포인트: `/api/stock/{q}`(**1차 빠름**: 시세·PER·밸류해설), `/api/details/{q}`(**2차 느림**: 3년재무·공시·뉴스·애널리스트), `/api/peers/{q}`(동종업계 PER 비교, 별도로드), `/api/analyze`(+설명), `/api/explain`(설명만), `/api/trending`, `/api/indices`(오늘의 시장 지수), `/api/market-analysis`(시황·섹터 AI), `/api/examples`, `/api/health`. startup에서 KRX목록·DART기업코드 prewarm.
 - `app/market.py` — FinanceDataReader(시세·등락률·종목명↔코드·trending·**지수**), **네이버 금융**(PER/PBR/EPS/예상PER + **애널리스트 정보**), `value_analysis`(밸류 해설). KRX 목록은 `lru_cache`. ※ pykrx 제거됨
   - `indices()` — 오늘의 시장: 코스피(KS11)·코스닥(KQ11)·나스닥(IXIC)·다우(DJI) 최신값+등락률+스파크라인용 종가 25개. 미국지수는 Change 없어 종가차로 계산. 캐시 300s. ※그래프는 추후 증권사 실시간 API로 교체 예정.
   - `_integration_raw(code)` — 네이버 통합API 원본(캐시 600s). 펀더멘털·애널리스트가 한 응답 → 1회 호출 공용.
   - `analyst_info(code)` — **증권가 컨센서스**(목표주가 평균·투자의견 1~5→한글라벨) + **최근 증권사 리포트**(증권사·제목·날짜 5건) + **동종업계**(종목명·당일등락 5개). `consensusInfo`/`researches`/`industryCompareInfo`에서 추출.
+  - `peer_valuation(code)` — **동종업계 PER·PBR 비교표**(본인+같은 업종 4 + **중앙값**). peer코드는 `industryCompareInfo`의 itemCode, peer별 PER은 `fundamentals(peer)` 재사용. **평균 대신 중앙값**(적자·저이익 종목의 초고PER 이상치 방어). 캐시 1800s.
 - `app/dart.py` — **DART REST 직접호출**(corpCode.xml→기업코드 dict, fnlttSinglAcntAll.json→3년재무, list.json→공시). ※ OpenDartReader 제거됨(메모리 문제로 교체)
 - `app/news.py` — 네이버 종목 뉴스(최근 3개월).
 - `app/cache.py` — 메모리 TTL 캐시(시세120s/PER600s/뉴스3600s/공시21600s/재무43200s, 빈값 미캐시).
@@ -43,7 +44,7 @@ cd stock-ai-frontend && npm install && npm run dev   # :5173
 ## 프론트엔드 (React 18 + Vite)
 - `src/App.jsx` — 탭 4개(왼→오): **오늘의 시장**(기본·홈) / 이슈 종목 / 종목 분석 / 투자 유형 테스트. 워드마크 클릭=오늘의 시장.
 - `src/components/MarketToday.jsx` — **오늘의 시장**: `/api/indices`로 코스피·코스닥·나스닥·다우 카드(값·등락률·**스파크라인 SVG**, 상승빨강/하락파랑) + `/api/market-analysis`로 시황·섹터 AI(`▌`2섹션). 그래프는 종가 시계열(추후 증권사 실시간 교체).
-- `src/components/Analyzer.jsx` — 점진적 로딩: `/api/stock`(가격·PER) 먼저 렌더 → `/api/details`(3년재무표·공시·뉴스·애널리스트)·**AI 분석**은 비동기로 뒤에 채움. AI 분석 전용 카드(`sa-analysis`, `▌`5섹션 `parseAnalysis`) + **증권가 카드**(목표주가·상승여력·투자의견·리포트, `sa-consensus`/`sa-report`)
+- `src/components/Analyzer.jsx` — 점진적 로딩: `/api/stock`(가격·PER) 먼저 렌더 → `/api/details`·`/api/explain`·`/api/peers`는 각각 비동기로 뒤에 채움. 카드: AI 분석(`sa-analysis`, `▌`5섹션) + **동종업계 PER 비교표**(`sa-peer`, 중앙값보다 낮으면 파랑/높으면 빨강) + **증권가 카드**(목표주가·**상승여력 게이지** `sa-target-gauge`·투자의견·리포트). ※목표주가 '날짜별 추이'는 무료 시계열이 없어 미구현 → DB(Supabase) 도입 시 매일 스냅샷으로 구현 예정.
 - `src/api.js` — `VITE_API_BASE`로 백엔드 주소 분리(개발은 비워두면 vite proxy)
 - `src/components/IssueBoard.jsx` — trending 카드. 클릭 → 분석 탭으로 종목 전달(`pendingQuery`)
 - `src/components/Quiz.jsx` + `src/quizData.js` — 투자유형 테스트(서버 불필요). **KOFIA 표준 체계**: 7문항(위험감내·기간·연령·경험·투자자금비중·목적·집중도) **가중치 적용 가중평균 0~100점** → 표준 컷오프(20/40/60/80) → **5등급**(안정형·안정추구형·위험중립형·적극투자형·공격투자형). ※ 등급·구간은 KOFIA 표준, 세부 배점은 표준 틀 기반 대표값(교육용). `computeScore()`·`getType()`

@@ -33,6 +33,17 @@ export async function getExplain(query) {
   }
 }
 
+// 동종업계 PER·PBR 비교표(본인+같은 업종 + 중앙값). 종목분석에서 별도 비동기 로드. 실패 시 빈 객체.
+export async function getPeers(query) {
+  try {
+    const r = await fetch(api("/api/peers/" + encodeURIComponent(query)));
+    if (!r.ok) return {};
+    return r.json();
+  } catch {
+    return {};
+  }
+}
+
 export async function getTrending() {
   const r = await fetch(api("/api/trending"));
   if (!r.ok) throw new Error("서버 응답 실패 (" + r.status + ")");

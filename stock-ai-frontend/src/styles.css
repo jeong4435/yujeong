@@ -237,6 +237,29 @@
 .sa-index-note{font-size:12px;color:var(--muted);text-align:center;margin:2px 0 16px;}
 @media (max-width:380px){.sa-index-grid{grid-template-columns:1fr;}}
 
+/* ── 동종업계 PER 비교표 ── */
+.sa-peer{width:100%;border-collapse:collapse;}
+.sa-peer th{font-size:12px;color:var(--muted);font-weight:700;text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);}
+.sa-peer th:first-child{text-align:left;}
+.sa-peer td{font-size:14px;padding:11px 8px;border-bottom:1px solid var(--line);text-align:right;}
+.sa-peer td.pn{text-align:left;font-weight:700;color:var(--ink2);}
+.sa-peer td.pv{font-weight:800;}
+.sa-peer td.pv2{color:var(--muted);font-weight:700;}
+.sa-peer tr.self{background:var(--accent-soft);}
+.sa-peer tr.self td{border-bottom:1px solid var(--line);}
+.sa-peer tr.self td.pn{color:var(--accent-d);}
+.sa-peer tr.median td{border-bottom:none;color:var(--muted);font-weight:800;background:var(--soft);}
+
+/* ── 목표주가 게이지 ── */
+.sa-target-gauge{margin-top:16px;}
+.sa-tg-track{height:8px;background:var(--soft);border-radius:999px;overflow:hidden;}
+.sa-tg-fill{height:100%;background:var(--up);border-radius:999px;}
+.sa-tg-fill.down{background:var(--down);}
+.sa-tg-labels{display:flex;justify-content:space-between;align-items:center;
+  font-size:11.5px;color:var(--muted);margin-top:7px;}
+.sa-tg-labels b{color:var(--ink2);font-weight:800;}
+.sa-tg-labels span:nth-child(2){color:var(--accent-d);font-weight:700;}
+
 /* ── 애널리스트 컨센서스 카드 ── */
 .sa-consensus{display:flex;gap:10px;}
 .sa-cons-box{flex:1;background:var(--soft);border-radius:14px;padding:14px 16px;}

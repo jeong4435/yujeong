@@ -215,6 +215,44 @@ def _fundamentals_naver(code: str) -> dict:
     return out if any(out.get(k) is not None for k in ("per", "pbr", "eps")) else {}
 
 
+@ttl_cache(1800)  # 동종업계 PER 비교 — peer별 조회라 30분 캐시
+def peer_valuation(code: str) -> dict:
+    """동종업계 PER·PBR 비교표. 본인 + 같은 업종 종목(최대 4) + 업종평균.
+    각 peer는 fundamentals()로 PER/PBR 조회(네이버, 캐시됨). 실패하면 빈 값."""
+    try:
+        d = _integration_raw(code)
+    except Exception:
+        return {}
+    rows = []
+    # 1) 본인
+    self_fu = fundamentals(code)
+    rows.append({
+        "name": str(d.get("stockName") or code), "code": code,
+        "per": self_fu.get("per"), "pbr": self_fu.get("pbr"), "is_self": True,
+    })
+    # 2) 동종업계 (자기 자신 제외, 최대 4)
+    for x in (d.get("industryCompareInfo") or []):
+        pcode = str(x.get("itemCode", "")).zfill(6) if x.get("itemCode") else ""
+        pname = str(x.get("stockName", "")).strip()
+        if not pcode or pcode == code or not pname:
+            continue
+        pf = fundamentals(pcode)
+        rows.append({
+            "name": pname, "code": pcode,
+            "per": pf.get("per"), "pbr": pf.get("pbr"), "is_self": False,
+        })
+        if len(rows) >= 5:   # 본인 + peer 4
+            break
+    # PER이 하나도 없으면 비교 의미 없음
+    pers = sorted(r["per"] for r in rows if r.get("per") is not None and r["per"] > 0)
+    if not pers:
+        return {}
+    # 업종 대표값은 '중앙값'(median) — 적자/저이익 종목의 초고PER 이상치에 휘둘리지 않게
+    n = len(pers)
+    median_per = pers[n // 2] if n % 2 else round((pers[n // 2 - 1] + pers[n // 2]) / 2, 2)
+    return {"rows": rows, "median_per": median_per}
+
+
 def _recomm_label(rec) -> str:
     """투자의견 평균(1~5, 높을수록 매수) → 한글 라벨. 네이버 컨센서스 기준."""
     if rec is None:

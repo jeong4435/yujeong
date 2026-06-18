@@ -129,6 +129,15 @@ def explain_query(query: str):
     return {"explanation": explain.explain(data)}
 
 
+@app.get("/api/peers/{query}")
+def peers(query: str):
+    """동종업계 PER·PBR 비교표(본인+같은 업종 최대 4 + 업종평균). 종목분석 별도 로드용."""
+    code, name = _resolve(query)
+    if code is None:
+        return name  # 에러 dict
+    return market.peer_valuation(code)
+
+
 @app.get("/api/trending")
 def trending():
     """KRX 실데이터 기반 이슈 종목(거래대금 상위·급등·급락)."""

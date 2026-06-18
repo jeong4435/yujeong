@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getStock, getDetails, getExplain, getExamples, won, num, eok } from "../api.js";
+import { getStock, getDetails, getExplain, getExamples, getPeers, won, num, eok } from "../api.js";
 import MyStocks from "./MyStocks.jsx";
 
 // 거래대금 TOP을 못 받아왔을 때 보여줄 기본 예시
@@ -64,6 +64,8 @@ export default function Analyzer({ initialQuery, onConsumed }) {
   const [error, setError] = useState("");
   const [last, setLast] = useState("");
   const [examples, setExamples] = useState(FALLBACK_EXAMPLES);
+  const [peers, setPeers] = useState(null);
+  const [peersLoading, setPeersLoading] = useState(false);
 
   // 예시 칩 = 전일 거래대금 TOP (실패하면 기본 목록 유지)
   useEffect(() => {
@@ -84,7 +86,7 @@ export default function Analyzer({ initialQuery, onConsumed }) {
     const term = (q ?? query).trim();
     if (!term || loading) return;
     setLast(term);
-    setLoading(true); setError(""); setData(null); setExplanation(null);
+    setLoading(true); setError(""); setData(null); setExplanation(null); setPeers(null);
     try {
       const d = await getStock(term);   // 1차: 시세·PER·밸류해설 (빠름)
       if (d.error) { setError(d.error); return; }
@@ -98,6 +100,9 @@ export default function Analyzer({ initialQuery, onConsumed }) {
       // 설명은 따로(키 있을 때만, 숫자 먼저 보여주고 뒤이어 채움)
       setExplLoading(true);
       getExplain(term).then((ex) => { setExplanation(ex); setExplLoading(false); });
+      // 동종업계 PER 비교도 별도로(여러 종목 조회라 느릴 수 있음)
+      setPeersLoading(true);
+      getPeers(term).then((p) => { setPeers(p && p.rows ? p : null); setPeersLoading(false); });
     } catch (e) {
       setError("서버에 연결하지 못했어요. 백엔드(uvicorn)가 켜져 있는지 확인하세요.");
     } finally {
@@ -216,6 +221,49 @@ export default function Analyzer({ initialQuery, onConsumed }) {
             )}
           </div>
 
+          {peersLoading && !peers && (
+            <div className="sa-card">
+              <div className="sa-analysis-loading">
+                <div className="sa-spin" />
+                <span>동종업계 PER 비교하는 중…</span>
+              </div>
+            </div>
+          )}
+          {peers && peers.rows && peers.rows.length > 1 && (
+            <div className="sa-card">
+              <h3><span className="sa-chip">비교</span> 같은 업종과 견줘보면? <span style={{ color: "var(--muted)", fontWeight: 600, fontSize: 12 }}>네이버 동일업종</span></h3>
+              <table className="sa-peer">
+                <thead>
+                  <tr><th>종목</th><th>PER</th><th>PBR</th></tr>
+                </thead>
+                <tbody>
+                  {peers.rows.map((r, i) => {
+                    const hi = r.per != null && peers.median_per != null && r.per > peers.median_per;
+                    const lo = r.per != null && peers.median_per != null && r.per < peers.median_per;
+                    return (
+                      <tr key={i} className={r.is_self ? "self" : ""}>
+                        <td className="pn">{r.name}{r.is_self ? " (이 종목)" : ""}</td>
+                        <td className={"pv " + (hi ? "v-over" : lo ? "v-under" : "")}>{r.per != null ? r.per.toLocaleString("ko-KR") + "배" : "—"}</td>
+                        <td className="pv2">{r.pbr != null ? r.pbr + "배" : "—"}</td>
+                      </tr>
+                    );
+                  })}
+                  {peers.median_per != null && (
+                    <tr className="median">
+                      <td className="pn">업종 중앙값</td>
+                      <td className="pv">{peers.median_per.toLocaleString("ko-KR")}배</td>
+                      <td className="pv2">—</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+              <div className="sa-body" style={{ marginTop: 10, fontSize: 12.5, color: "var(--muted)" }}>
+                PER이 <b style={{ color: "var(--down)" }}>중앙값보다 낮으면</b> 같은 업종 대비 이익에 비해 주가가 싼 편, <b style={{ color: "var(--up)" }}>높으면</b> 비싼 편이에요.
+                중앙값은 적자·저이익 종목의 극단적 PER에 휘둘리지 않게 '가운데 값'을 쓴 거예요.
+              </div>
+            </div>
+          )}
+
           {(() => {
             const an = data.analyst || {};
             const cons = an.consensus;
@@ -245,6 +293,23 @@ export default function Analyzer({ initialQuery, onConsumed }) {
                     )}
                   </div>
                 )}
+                {tgt != null && data.price != null && (() => {
+                  // 목표주가 게이지: 현재가가 목표가까지 어디쯤인지 (현재가÷목표가)
+                  const reached = data.price >= tgt;
+                  const pct = reached ? 100 : Math.max(4, (data.price / tgt) * 100);
+                  return (
+                    <div className="sa-target-gauge">
+                      <div className="sa-tg-track">
+                        <div className={"sa-tg-fill" + (up < 0 ? " down" : "")} style={{ width: pct + "%" }} />
+                      </div>
+                      <div className="sa-tg-labels">
+                        <span>현재가 <b>{won(data.price)}</b></span>
+                        <span>{reached ? "목표가 도달·초과" : `목표가까지 ${up != null ? (up > 0 ? "+" : "") + up.toFixed(1) + "%" : ""}`}</span>
+                        <span>목표 <b>{won(tgt)}</b></span>
+                      </div>
+                    </div>
+                  );
+                })()}
                 {reports.length > 0 && (
                   <div style={{ marginTop: cons ? 16 : 0 }}>
                     <div className="sa-reports-h">최근 증권사 리포트</div>
