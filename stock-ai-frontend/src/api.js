@@ -39,6 +39,29 @@ export async function getTrending() {
   return r.json();
 }
 
+// 오늘의 시장 — 코스피·코스닥·나스닥·다우 지수값+그래프 시계열. 실패 시 빈 객체.
+export async function getIndices() {
+  try {
+    const r = await fetch(api("/api/indices"));
+    if (!r.ok) return {};
+    return r.json();
+  } catch {
+    return {};
+  }
+}
+
+// 오늘의 시장 — 시황·섹터 AI 분석. 백엔드에 키 없으면 null.
+export async function getMarketAnalysis() {
+  try {
+    const r = await fetch(api("/api/market-analysis"));
+    if (!r.ok) return null;
+    const d = await r.json();
+    return d.analysis || null;
+  } catch {
+    return null;
+  }
+}
+
 // 종목 분석 예시 칩 = 전일 거래대금 TOP (하루 한 번 갱신). 실패 시 빈 배열 → 프론트 기본 목록 폴백.
 export async function getExamples() {
   try {

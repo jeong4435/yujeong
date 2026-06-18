@@ -135,6 +135,18 @@ def trending():
     return market.trending()
 
 
+@app.get("/api/indices")
+def indices():
+    """오늘의 시장 — 코스피·코스닥·나스닥·다우 지수값+등락률+그래프용 시계열. (빠름)"""
+    return market.indices()
+
+
+@app.get("/api/market-analysis")
+def market_analysis():
+    """오늘의 시장 — 시황·섹터 AI 분석. (느림, 키 없으면 analysis=null)"""
+    return {"analysis": explain.market_overview(market.indices(), market.trending())}
+
+
 @app.get("/api/examples")
 def examples():
     """종목 분석 검색창 아래 예시 칩 = 전일 거래대금 TOP (하루 한 번 갱신)."""

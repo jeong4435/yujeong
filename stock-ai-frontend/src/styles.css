@@ -224,6 +224,19 @@
 .sa-explain{font-size:14.5px;line-height:1.65;color:#4E5968;white-space:pre-wrap;}
 .sa-explain-off{font-size:12.5px;color:var(--muted2);margin-top:6px;}
 
+/* ── 오늘의 시장: 지수 카드 + 스파크라인 ── */
+.sa-index-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.sa-index{background:var(--paper);border:1px solid var(--line);border-radius:16px;
+  padding:15px 16px;box-shadow:0 2px 12px var(--shadow);}
+.sa-index-h{display:flex;align-items:center;justify-content:space-between;}
+.sa-index-h .nm{font-size:13.5px;font-weight:800;color:var(--ink2);letter-spacing:-.02em;}
+.sa-index-h .cp{font-size:12.5px;font-weight:800;}
+.sa-index-v{font-size:22px;font-weight:800;letter-spacing:-.04em;margin:4px 0 8px;color:var(--ink);}
+.sa-spark{width:100%;height:32px;display:block;}
+.sa-index-d{font-size:11px;color:var(--muted2);margin-top:7px;}
+.sa-index-note{font-size:12px;color:var(--muted);text-align:center;margin:2px 0 16px;}
+@media (max-width:380px){.sa-index-grid{grid-template-columns:1fr;}}
+
 /* ── 애널리스트 컨센서스 카드 ── */
 .sa-consensus{display:flex;gap:10px;}
 .sa-cons-box{flex:1;background:var(--soft);border-radius:14px;padding:14px 16px;}

@@ -125,6 +125,46 @@ def trending(top: int = 5) -> dict:
     }
 
 
+# 오늘의 시장 탭에 띄울 주요 지수 (key, 표시이름, FDR 심볼)
+# ※ 그래프는 추후 증권사 실시간 API로 교체 예정 → series는 일단 일별 종가(플레이스홀더)
+_INDICES = [
+    ("kospi", "코스피", "KS11"),
+    ("kosdaq", "코스닥", "KQ11"),
+    ("nasdaq", "나스닥", "IXIC"),
+    ("dow", "다우존스", "DJI"),
+]
+
+
+@ttl_cache(300)  # 지수는 5분 캐시(장중 갱신용). 추후 실시간 API로 대체.
+def indices() -> dict:
+    """코스피·코스닥·나스닥·다우 최신값 + 등락률 + 스파크라인용 종가 시계열."""
+    start = (dt.date.today() - dt.timedelta(days=45)).strftime("%Y-%m-%d")
+    out = []
+    for key, name, sym in _INDICES:
+        try:
+            df = fdr.DataReader(sym, start)
+            if df is None or len(df) == 0:
+                continue
+            closes = [round(float(c), 2) for c in df["Close"].tolist() if c == c]
+            if not closes:
+                continue
+            chg = df.iloc[-1].get("Change")  # 국내지수는 비율(0.0166). 미국지수는 없음.
+            if chg is None or chg != chg:
+                # Change 컬럼이 없으면(미국지수) 직전 종가 대비 직접 계산
+                chg = (closes[-1] - closes[-2]) / closes[-2] if len(closes) >= 2 and closes[-2] else None
+            out.append({
+                "key": key,
+                "name": name,
+                "price": closes[-1],
+                "change_pct": round(float(chg) * 100, 2) if chg is not None and chg == chg else None,
+                "as_of": str(df.index[-1].date()),
+                "series": closes[-25:],   # 최근 25거래일 종가(스파크라인)
+            })
+        except Exception:
+            continue
+    return {"indices": out} if out else {}
+
+
 @ttl_cache(43200)  # 전일 거래대금 TOP — 종가 데이터는 하루 한 번 갱신 → 12시간 캐시
 def example_tickers(n: int = 5) -> dict:
     """종목 분석 검색창 아래 '예시 칩' = 전일 거래대금 상위 n개 종목명."""

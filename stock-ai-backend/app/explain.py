@@ -156,7 +156,8 @@ PER·PBR 수준과 현재 주가가 비싼지 싼지를 데이터 근거로. 동
 - 한국어로 작성"""
 
 
-def explain(data: dict):
+def _generate(prompt: str):
+    """프롬프트 → Gemini 텍스트. 키 없으면 None, 모델은 자동 폴백."""
     global _working_model
     key = os.environ.get("GEMINI_API_KEY")
     if not key or genai is None:
@@ -165,8 +166,6 @@ def explain(data: dict):
         genai.configure(api_key=key)
     except Exception:
         return None
-
-    prompt = _build_prompt(data)
     # 이미 되는 모델을 알면 그것부터, 모르면 후보 순서대로 시도.
     order = ([_working_model] if _working_model else []) + \
             [m for m in MODEL_CANDIDATES if m != _working_model]
@@ -180,3 +179,72 @@ def explain(data: dict):
         except Exception:
             continue   # 이 모델 실패 → 다음 후보로
     return None
+
+
+def explain(data: dict):
+    """개별 종목 종합 분석(5섹션)."""
+    return _generate(_build_prompt(data))
+
+
+def _build_market_prompt(indices: dict, trending: dict) -> str:
+    idx_list = (indices or {}).get("indices", []) or []
+    idx_text = "없음"
+    if idx_list:
+        rows = []
+        for x in idx_list:
+            cp = x.get("change_pct")
+            sign = "" if cp is None else (f"{cp:+.2f}%")
+            rows.append(f"  {x.get('name','')}: {x.get('price','')} ({sign})")
+        idx_text = "\n".join(rows)
+
+    # 오늘의 거래대금 상위/급등/급락 종목 → 섹터 추론 재료
+    groups = (trending or {}).get("groups", []) or []
+    def names(label_kw):
+        for g in groups:
+            if label_kw in g.get("label", ""):
+                return ", ".join(
+                    f"{s.get('name','')}({s.get('change_pct'):+.1f}%)" if s.get("change_pct") is not None
+                    else str(s.get("name", "")) for s in (g.get("stocks") or [])[:5]
+                ) or "없음"
+        return "없음"
+    vol_text = names("거래대금")
+    up_text = names("급등")
+    down_text = names("급락")
+
+    return f"""당신은 한국 주식시장 전문 애널리스트입니다.
+아래는 오늘 시장의 실제 데이터입니다. 수치는 절대 바꾸지 마세요.
+
+[주요 지수]
+{idx_text}
+
+[오늘 거래대금 상위]
+{vol_text}
+
+[오늘 급등 종목]
+{up_text}
+
+[오늘 급락 종목]
+{down_text}
+
+---
+아래 2개 항목을 분석해주세요. 각 항목은 4~6문장, 고등학생도 이해되게.
+
+1. 시황
+국내(코스피·코스닥)와 미국(나스닥·다우) 지수의 방향을 종합해 오늘 시장 분위기를 설명.
+국내외 흐름이 같은지 다른지, 위험을 선호하는(공격적) 분위기인지 회피하는(보수적) 분위기인지 쉽게 풀어줘.
+
+2. 섹터
+급등·급락·거래대금 상위 종목들이 어떤 업종(섹터·테마)에 속하는지 보고, 오늘 어떤 분야에 돈이 몰리고 빠졌는지 정리.
+(예: 반도체·2차전지·바이오·자동차·금융 등. 종목명으로 업종을 추론하되, 모르면 단정하지 말 것)
+
+작성 규칙:
+- 전문용어는 처음 등장 시 괄호로 짧게 풀이
+- 데이터에 없는 수치를 지어내지 말 것
+- '지금 사세요/파세요' 같은 매수·매도 권유 금지
+- 항목 구분은 "▌시황", "▌섹터" 형식 사용
+- 한국어로 작성"""
+
+
+def market_overview(indices: dict, trending: dict):
+    """오늘의 시장 — 시황·섹터 AI 분석(2섹션). 키 없으면 None."""
+    return _generate(_build_market_prompt(indices, trending))

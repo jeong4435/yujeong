@@ -25,20 +25,25 @@ cd stock-ai-frontend && npm install && npm run dev   # :5173
 원클릭 스크립트: `start-backend.{bat,sh}`, `start-frontend.{bat,sh}`
 
 ## 백엔드 (Python 3.12)
-- `app/main.py` — 엔드포인트: `/api/stock/{q}`(**1차 빠름**: 시세·PER·밸류해설), `/api/details/{q}`(**2차 느림**: 3년재무·공시·뉴스), `/api/analyze`(+설명), `/api/explain`(설명만), `/api/trending`, `/api/health`. startup에서 KRX목록·DART기업코드 prewarm.
-- `app/market.py` — FinanceDataReader(시세·등락률·종목명↔코드·trending), **네이버 금융**(PER/PBR/EPS/예상PER + **애널리스트 정보**), `value_analysis`(밸류 해설). KRX 목록은 `lru_cache`. ※ pykrx 제거됨
+- `app/main.py` — 엔드포인트: `/api/stock/{q}`(**1차 빠름**: 시세·PER·밸류해설), `/api/details/{q}`(**2차 느림**: 3년재무·공시·뉴스·애널리스트), `/api/analyze`(+설명), `/api/explain`(설명만), `/api/trending`, `/api/indices`(오늘의 시장 지수), `/api/market-analysis`(시황·섹터 AI), `/api/examples`, `/api/health`. startup에서 KRX목록·DART기업코드 prewarm.
+- `app/market.py` — FinanceDataReader(시세·등락률·종목명↔코드·trending·**지수**), **네이버 금융**(PER/PBR/EPS/예상PER + **애널리스트 정보**), `value_analysis`(밸류 해설). KRX 목록은 `lru_cache`. ※ pykrx 제거됨
+  - `indices()` — 오늘의 시장: 코스피(KS11)·코스닥(KQ11)·나스닥(IXIC)·다우(DJI) 최신값+등락률+스파크라인용 종가 25개. 미국지수는 Change 없어 종가차로 계산. 캐시 300s. ※그래프는 추후 증권사 실시간 API로 교체 예정.
   - `_integration_raw(code)` — 네이버 통합API 원본(캐시 600s). 펀더멘털·애널리스트가 한 응답 → 1회 호출 공용.
   - `analyst_info(code)` — **증권가 컨센서스**(목표주가 평균·투자의견 1~5→한글라벨) + **최근 증권사 리포트**(증권사·제목·날짜 5건) + **동종업계**(종목명·당일등락 5개). `consensusInfo`/`researches`/`industryCompareInfo`에서 추출.
 - `app/dart.py` — **DART REST 직접호출**(corpCode.xml→기업코드 dict, fnlttSinglAcntAll.json→3년재무, list.json→공시). ※ OpenDartReader 제거됨(메모리 문제로 교체)
 - `app/news.py` — 네이버 종목 뉴스(최근 3개월).
 - `app/cache.py` — 메모리 TTL 캐시(시세120s/PER600s/뉴스3600s/공시21600s/재무43200s, 빈값 미캐시).
-- `app/explain.py` — **Gemini 종합 분석**(`GEMINI_API_KEY` 있을 때만, 없으면 None). 모델은 `MODEL_CANDIDATES` 우선순위로 자동 폴백(현재 `gemini-2.5-flash` 작동, 1.5 시리즈는 2025년 은퇴). **5개 섹션**(`▌`구분): 밸류에이션·펀더멘털·최근이슈·**증권가 시각**·종합. 재무·공시·뉴스 + **애널리스트 컨센서스·리포트·동종업계**를 프롬프트에 통합. **직접 매수/매도 권유 금지**(증권가 목표주가는 '인용'하되 우리 권유로 표현 안 함).
+- `app/explain.py` — **Gemini 분석**(`GEMINI_API_KEY` 있을 때만, 없으면 None). 모델 `MODEL_CANDIDATES` 자동 폴백(현재 `gemini-2.5-flash`, 1.5 시리즈는 2025년 은퇴). 공통 호출은 `_generate(prompt)`.
+  - `explain(data)` — **개별 종목 5섹션**(`▌`): 밸류·펀더멘털·최근이슈·**증권가 시각**·종합. 재무·공시·뉴스 + 애널리스트 컨센서스·리포트·동종업계 통합.
+  - `market_overview(indices, trending)` — **오늘의 시장 2섹션**(`▌`): **시황**(국내외 지수 종합)·**섹터**(거래대금/급등/급락 종목으로 업종 추론).
+  - **직접 매수/매도 권유 금지**(증권가 목표주가는 '인용'하되 우리 권유로 표현 안 함).
 - **원칙: 모든 외부 호출 try/except → 빈 값. 절대 500으로 죽지 않게.** 스레드 병렬화는 라이브러리 경합으로 역효과(순차 유지).
 - `.env` 에 `DART_API_KEY` (gitignore). 커밋 금지. 배포 환경변수는 Render에 등록됨.
 
 ## 프론트엔드 (React 18 + Vite)
-- `src/App.jsx` — 탭 3개: 🔥이슈종목 / 📈종목분석 / 🧭내유형
-- `src/components/Analyzer.jsx` — 점진적 로딩: `/api/stock`(가격·PER) 먼저 렌더 → `/api/details`(3년재무표·공시·뉴스)·**AI 분석**은 비동기로 뒤에 채움. AI 분석은 가격 카드 아래 전용 카드(`sa-analysis`)로 표시, `▌`로 4개 섹션 파싱(`parseAnalysis`)
+- `src/App.jsx` — 탭 4개(왼→오): **오늘의 시장**(기본·홈) / 이슈 종목 / 종목 분석 / 투자 유형 테스트. 워드마크 클릭=오늘의 시장.
+- `src/components/MarketToday.jsx` — **오늘의 시장**: `/api/indices`로 코스피·코스닥·나스닥·다우 카드(값·등락률·**스파크라인 SVG**, 상승빨강/하락파랑) + `/api/market-analysis`로 시황·섹터 AI(`▌`2섹션). 그래프는 종가 시계열(추후 증권사 실시간 교체).
+- `src/components/Analyzer.jsx` — 점진적 로딩: `/api/stock`(가격·PER) 먼저 렌더 → `/api/details`(3년재무표·공시·뉴스·애널리스트)·**AI 분석**은 비동기로 뒤에 채움. AI 분석 전용 카드(`sa-analysis`, `▌`5섹션 `parseAnalysis`) + **증권가 카드**(목표주가·상승여력·투자의견·리포트, `sa-consensus`/`sa-report`)
 - `src/api.js` — `VITE_API_BASE`로 백엔드 주소 분리(개발은 비워두면 vite proxy)
 - `src/components/IssueBoard.jsx` — trending 카드. 클릭 → 분석 탭으로 종목 전달(`pendingQuery`)
 - `src/components/Quiz.jsx` + `src/quizData.js` — 투자유형 테스트(서버 불필요). **KOFIA 표준 체계**: 7문항(위험감내·기간·연령·경험·투자자금비중·목적·집중도) **가중치 적용 가중평균 0~100점** → 표준 컷오프(20/40/60/80) → **5등급**(안정형·안정추구형·위험중립형·적극투자형·공격투자형). ※ 등급·구간은 KOFIA 표준, 세부 배점은 표준 틀 기반 대표값(교육용). `computeScore()`·`getType()`
