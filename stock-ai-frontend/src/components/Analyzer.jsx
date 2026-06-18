@@ -30,14 +30,20 @@ function trendComment(t) {
   return (head + tail).trim();
 }
 // Gemini 분석 텍스트 파싱 (▌섹션 구분자)
+// 첫 ▌ 이전(머리말/인사말)은 라벨 없는 인트로로 처리.
 function parseAnalysis(text) {
   if (!text) return [];
-  return text.split(/▌/).filter(Boolean).map((part) => {
-    const nl = part.indexOf("\n");
-    return nl === -1
-      ? { label: part.trim(), text: "" }
-      : { label: part.slice(0, nl).trim(), text: part.slice(nl).trim() };
+  const out = [];
+  text.split("▌").forEach((part, i) => {
+    const seg = part.trim();
+    if (!seg) return;
+    if (i === 0) { out.push({ label: "", text: seg }); return; }  // 머리말
+    const nl = seg.indexOf("\n");
+    out.push(nl === -1
+      ? { label: seg, text: "" }
+      : { label: seg.slice(0, nl).trim(), text: seg.slice(nl).trim() });
   });
+  return out;
 }
 
 // 'YYYYMMDD' 또는 'YYYY-MM-DD' → 'YYYY.MM.DD'
@@ -182,9 +188,9 @@ export default function Analyzer({ initialQuery, onConsumed }) {
               <div className="sa-analysis">
                 {parseAnalysis(explanation).map((sec, i) => (
                   <div key={i} className="sa-analysis-section">
-                    {i > 0 && <div className="sa-analysis-divider" />}
-                    <div className="sa-analysis-label">{sec.label}</div>
-                    <div className="sa-analysis-text">{sec.text}</div>
+                    {i > 0 && sec.label && <div className="sa-analysis-divider" />}
+                    {sec.label && <div className="sa-analysis-label">{sec.label}</div>}
+                    <div className={sec.label ? "sa-analysis-text" : "sa-analysis-intro"}>{sec.text}</div>
                   </div>
                 ))}
               </div>

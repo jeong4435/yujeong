@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { getIndices, getMarketAnalysis, num } from "../api.js";
 
-// ▌로 구분된 AI 분석 텍스트 → [{label, text}]
+// ▌로 구분된 AI 분석 텍스트 → [{label, text}]. 첫 ▌ 이전(인사말)은 라벨 없는 인트로.
 function parseAnalysis(text) {
   if (!text) return [];
-  return text.split(/▌/).filter(Boolean).map((part) => {
-    const nl = part.indexOf("\n");
-    return nl === -1
-      ? { label: part.trim(), text: "" }
-      : { label: part.slice(0, nl).trim(), text: part.slice(nl).trim() };
+  const out = [];
+  text.split("▌").forEach((part, i) => {
+    const seg = part.trim();
+    if (!seg) return;
+    if (i === 0) { out.push({ label: "", text: seg }); return; }
+    const nl = seg.indexOf("\n");
+    out.push(nl === -1
+      ? { label: seg, text: "" }
+      : { label: seg.slice(0, nl).trim(), text: seg.slice(nl).trim() });
   });
+  return out;
 }
 
 // 종가 시계열 → 미니 그래프(SVG). 상승=빨강 / 하락=파랑 (한국 증시 관례)
@@ -118,9 +123,9 @@ export default function MarketToday() {
           <div className="sa-analysis">
             {parseAnalysis(analysis).map((sec, i) => (
               <div key={i} className="sa-analysis-section">
-                {i > 0 && <div className="sa-analysis-divider" />}
-                <div className="sa-analysis-label">{sec.label}</div>
-                <div className="sa-analysis-text">{sec.text}</div>
+                {i > 0 && sec.label && <div className="sa-analysis-divider" />}
+                {sec.label && <div className="sa-analysis-label">{sec.label}</div>}
+                <div className={sec.label ? "sa-analysis-text" : "sa-analysis-intro"}>{sec.text}</div>
               </div>
             ))}
           </div>
