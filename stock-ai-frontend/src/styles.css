@@ -224,6 +224,18 @@
 .sa-explain{font-size:14.5px;line-height:1.65;color:#4E5968;white-space:pre-wrap;}
 .sa-explain-off{font-size:12.5px;color:var(--muted2);margin-top:6px;}
 
+/* ── 애널리스트 컨센서스 카드 ── */
+.sa-consensus{display:flex;gap:10px;}
+.sa-cons-box{flex:1;background:var(--soft);border-radius:14px;padding:14px 16px;}
+.sa-cons-box .cl{font-size:12px;color:var(--muted);font-weight:700;}
+.sa-cons-box .cv{font-size:20px;font-weight:800;letter-spacing:-.03em;margin-top:3px;color:var(--ink);}
+.sa-cons-box .cu{font-size:12.5px;font-weight:700;margin-top:2px;}
+.sa-reports-h{font-size:12.5px;font-weight:800;color:var(--ink2);margin-bottom:8px;}
+.sa-report{padding:9px 0;border-top:1px solid var(--line);}
+.sa-report:first-of-type{border-top:none;}
+.sa-report .rt{font-size:14px;font-weight:700;color:var(--ink2);line-height:1.4;}
+.sa-report .rm{font-size:12px;color:var(--muted);margin-top:2px;}
+
 /* ── AI 분석 카드 ── */
 .sa-analysis{display:flex;flex-direction:column;gap:16px;}
 .sa-analysis-section{}

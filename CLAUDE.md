@@ -26,11 +26,13 @@ cd stock-ai-frontend && npm install && npm run dev   # :5173
 
 ## 백엔드 (Python 3.12)
 - `app/main.py` — 엔드포인트: `/api/stock/{q}`(**1차 빠름**: 시세·PER·밸류해설), `/api/details/{q}`(**2차 느림**: 3년재무·공시·뉴스), `/api/analyze`(+설명), `/api/explain`(설명만), `/api/trending`, `/api/health`. startup에서 KRX목록·DART기업코드 prewarm.
-- `app/market.py` — FinanceDataReader(시세·등락률·종목명↔코드·trending), **네이버 금융**(PER/PBR/EPS/예상PER), `value_analysis`(밸류 해설). KRX 목록은 `lru_cache`. ※ pykrx 제거됨
+- `app/market.py` — FinanceDataReader(시세·등락률·종목명↔코드·trending), **네이버 금융**(PER/PBR/EPS/예상PER + **애널리스트 정보**), `value_analysis`(밸류 해설). KRX 목록은 `lru_cache`. ※ pykrx 제거됨
+  - `_integration_raw(code)` — 네이버 통합API 원본(캐시 600s). 펀더멘털·애널리스트가 한 응답 → 1회 호출 공용.
+  - `analyst_info(code)` — **증권가 컨센서스**(목표주가 평균·투자의견 1~5→한글라벨) + **최근 증권사 리포트**(증권사·제목·날짜 5건) + **동종업계**(종목명·당일등락 5개). `consensusInfo`/`researches`/`industryCompareInfo`에서 추출.
 - `app/dart.py` — **DART REST 직접호출**(corpCode.xml→기업코드 dict, fnlttSinglAcntAll.json→3년재무, list.json→공시). ※ OpenDartReader 제거됨(메모리 문제로 교체)
 - `app/news.py` — 네이버 종목 뉴스(최근 3개월).
 - `app/cache.py` — 메모리 TTL 캐시(시세120s/PER600s/뉴스3600s/공시21600s/재무43200s, 빈값 미캐시).
-- `app/explain.py` — **Gemini 종합 분석**(`GEMINI_API_KEY` 있을 때만, 없으면 None). 모델은 `MODEL_CANDIDATES` 우선순위로 자동 폴백(현재 `gemini-2.5-flash` 작동, 1.5 시리즈는 2025년 은퇴). 밸류에이션·펀더멘털·이슈·종합 4개 섹션(`▌`구분) 구조화 분석. 재무·공시·뉴스를 프롬프트에 통합. **직접 매수/매도 권유 금지**(데이터 근거만 제시).
+- `app/explain.py` — **Gemini 종합 분석**(`GEMINI_API_KEY` 있을 때만, 없으면 None). 모델은 `MODEL_CANDIDATES` 우선순위로 자동 폴백(현재 `gemini-2.5-flash` 작동, 1.5 시리즈는 2025년 은퇴). **5개 섹션**(`▌`구분): 밸류에이션·펀더멘털·최근이슈·**증권가 시각**·종합. 재무·공시·뉴스 + **애널리스트 컨센서스·리포트·동종업계**를 프롬프트에 통합. **직접 매수/매도 권유 금지**(증권가 목표주가는 '인용'하되 우리 권유로 표현 안 함).
 - **원칙: 모든 외부 호출 try/except → 빈 값. 절대 500으로 죽지 않게.** 스레드 병렬화는 라이브러리 경합으로 역효과(순차 유지).
 - `.env` 에 `DART_API_KEY` (gitignore). 커밋 금지. 배포 환경변수는 Render에 등록됨.
 

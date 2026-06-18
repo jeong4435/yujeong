@@ -210,6 +210,53 @@ export default function Analyzer({ initialQuery, onConsumed }) {
             )}
           </div>
 
+          {(() => {
+            const an = data.analyst || {};
+            const cons = an.consensus;
+            const reports = an.reports || [];
+            if (!cons && !reports.length) return null;
+            const tgt = cons?.target_price;
+            const up = tgt && data.price ? ((tgt - data.price) / data.price) * 100 : null;
+            const upCls = up == null ? "" : up > 0 ? "v-over" : up < 0 ? "v-under" : "";
+            return (
+              <div className="sa-card">
+                <h3><span className="sa-chip">증권가</span> 애널리스트들은 어떻게 볼까? <span style={{ color: "var(--muted)", fontWeight: 600, fontSize: 12 }}>네이버 컨센서스</span></h3>
+                {cons && (
+                  <div className="sa-consensus">
+                    {tgt != null && (
+                      <div className="sa-cons-box">
+                        <div className="cl">목표주가 평균</div>
+                        <div className="cv">{won(tgt)}</div>
+                        {up != null && <div className={"cu " + upCls}>현재가 대비 {up > 0 ? "▲" : up < 0 ? "▼" : ""} {Math.abs(up).toFixed(1)}%</div>}
+                      </div>
+                    )}
+                    {cons.recomm_label && (
+                      <div className="sa-cons-box">
+                        <div className="cl">투자의견 평균</div>
+                        <div className="cv">{cons.recomm_label}</div>
+                        {cons.recomm_mean != null && <div className="cu" style={{ color: "var(--muted)" }}>{cons.recomm_mean} / 5.0</div>}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {reports.length > 0 && (
+                  <div style={{ marginTop: cons ? 16 : 0 }}>
+                    <div className="sa-reports-h">최근 증권사 리포트</div>
+                    {reports.map((r, i) => (
+                      <div className="sa-report" key={i}>
+                        <div className="rt">{r.title}</div>
+                        <div className="rm">{r.broker}{r.date ? " · " + fmtDate(r.date) : ""}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="sa-body" style={{ marginTop: 12, fontSize: 12, color: "var(--muted)" }}>
+                  목표주가·투자의견은 여러 증권사 애널리스트 추정의 <b>평균</b>이에요. 정답이나 보장이 아니며, 리포트 원문은 증권사 앱에서 확인하세요.
+                </div>
+              </div>
+            );
+          })()}
+
           <div className="sa-card">
             <h3><span className="sa-chip">재무</span> 회사가 장사로 돈을 잘 버나? <span style={{ color: "var(--muted)", fontWeight: 600, fontSize: 12 }}>DART 3개년</span></h3>
             {f.trend?.years?.length ? (

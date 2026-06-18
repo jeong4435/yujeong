@@ -84,6 +84,7 @@ def _details(query: str) -> dict:
         "financials": fin,
         "disclosures": dart.disclosures(code),         # 최근 공시 2건
         "news": news.recent_news(code),                # 최근 3개월 기사
+        "analyst": market.analyst_info(code),          # 증권가 컨센서스·리포트·동종업계
         # 재무 추세까지 반영한 더 풍부한 밸류 해설로 업그레이드
         "value_analysis": market.value_analysis(market.fundamentals(code), fin),
     }

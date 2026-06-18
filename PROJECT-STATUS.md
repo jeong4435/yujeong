@@ -47,6 +47,7 @@
 |---|---|---|
 | 시세·거래량·등락률, 종목명↔코드, 이슈종목(trending) | **FinanceDataReader** | `app/market.py` |
 | PER·PBR·EPS·예상PER(cnsPer) | **네이버 금융** `m.stock.naver.com/api/stock/{code}/integration` | `app/market.py` |
+| **애널리스트 컨센서스**(목표주가·투자의견)·**증권사 리포트**·**동종업계** | **네이버 금융**(위 통합API의 `consensusInfo`/`researches`/`industryCompareInfo`) | `app/market.py` `analyst_info()` |
 | 3개년 재무(매출·영업이익·순이익), 공시 | **DART REST** (corpCode.xml + fnlttSinglAcntAll.json + list.json) | `app/dart.py` |
 | 최근 3개월 종목 뉴스 | **네이버 금융 뉴스** | `app/news.py` |
 | **AI 종합 분석**(밸류·펀더멘털·이슈·종합 4섹션) | **Google Gemini** (`gemini-2.5-flash`, 무료 티어) | `app/explain.py` — `GEMINI_API_KEY` 연결됨, **작동 중** |
@@ -76,6 +77,7 @@
 17. **'내 보유 주식' 자리(MyStocks.jsx)** — 종목분석 검색카드 아래. 비로그인=로그인 CTA + "로그인 시 보유종목 들어갈 공간" placeholder. 로그인(Phase0/1)+잔고(Phase2) 붙으면 `loggedIn`/`holdings`만 교체하면 작동(onPick→분석 연결됨).
 18. **투자유형 테스트 KOFIA 표준화** — 4유형→**5등급**(안정형~공격투자형), **연령·투자자금비중(재산상황)** 문항 추가(표준 구간), **가중치** 적용 가중평균(0~100). `quizData.js` 재작성(`computeScore`/`getType`). 추후 개인화·조언의 기반.
 19. **AI 종합 분석 도입(Gemini)** — 앱 핵심 3요소 중 **2번(AI 분석)을 최우선**으로 격상. `explain.py`를 Anthropic→**Google Gemini**(`google-generativeai`)로 교체. 밸류·펀더멘털·이슈·종합 **4섹션 구조화 분석**(`▌`구분), 재무·공시·뉴스 통합 프롬프트, 직접 매수/매도 권유 금지. 프론트는 **AI 분석 전용 카드**(`sa-analysis`, `parseAnalysis`)로 표시. **무료 티어**(하루 1,500회) 사용. ※모델 이슈 해결: 1.5 시리즈 은퇴(404) 확인 → `MODEL_CANDIDATES` **자동 폴백**(2.5-flash 우선)으로 견고화. `GEMINI_API_KEY`는 Render 환경변수. **작동 확인 완료**.
+20. **애널리스트 데이터 통합(AI 분석 고도화 1차)** — 네이버 통합API에 이미 있던 **증권가 컨센서스(목표주가 평균·투자의견)·증권사 리포트(증권사·제목·날짜)·동종업계 종목**을 발굴해 활용. `market.analyst_info()` 신설(`_integration_raw`로 펀더멘털과 호출 공용화 → API 추가부담 0). `/api/details`에 `analyst` 추가. **AI 프롬프트에 주입** → 분석이 추측이 아닌 **실제 목표주가·리포트 근거**로 깊어짐(▌**증권가 시각** 섹션 신설, 4→5섹션). 프론트 **'증권가' 카드 신설**(목표주가·상승여력·투자의견·리포트목록, `sa-consensus`/`sa-report`). 사용자가 원한 "리포트 근거 분석"의 합법·현실적 구현(공개 컨센서스 정보 전달, 우리 권유 아님). 로컬 E2E 검증(삼성전자: 목표 455,833원/+30%, 의견 매수, 리포트 5건) 완료.
 
 ## 6. 주요 설계 결정 (왜 이렇게 했나)
 - **하이브리드**: 숫자는 실제 API 값, AI/텍스트는 "설명만". 환각으로 가격이 틀릴 가능성 차단.

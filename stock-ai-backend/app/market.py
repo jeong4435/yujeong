@@ -151,11 +151,20 @@ def _parse_num(x):
         return None
 
 
-def _fundamentals_naver(code: str) -> dict:
-    """네이버 금융 통합 API에서 PER·PBR·EPS·예상PER. KRX가 막혀도 동작하는 메인 소스."""
+@ttl_cache(600)
+def _integration_raw(code: str) -> dict:
+    """네이버 통합 API 원본 JSON. 펀더멘털·애널리스트 정보가 한 응답에 다 있어서
+    한 번만 받아 공용으로 쓴다(중복 호출 방지)."""
     url = f"https://m.stock.naver.com/api/stock/{code}/integration"
     r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
-    info = {x.get("code"): x.get("value") for x in (r.json().get("totalInfos") or [])}
+    d = r.json()
+    return d if isinstance(d, dict) else {}
+
+
+def _fundamentals_naver(code: str) -> dict:
+    """네이버 통합 API에서 PER·PBR·EPS·예상PER. KRX가 막혀도 동작하는 메인 소스."""
+    d = _integration_raw(code)
+    info = {x.get("code"): x.get("value") for x in (d.get("totalInfos") or [])}
     out = {
         "per": _parse_num(info.get("per")),
         "pbr": _parse_num(info.get("pbr")),
@@ -164,6 +173,69 @@ def _fundamentals_naver(code: str) -> dict:
     }
     # per/pbr/eps 모두 비면 의미 없으니 빈 값 취급
     return out if any(out.get(k) is not None for k in ("per", "pbr", "eps")) else {}
+
+
+def _recomm_label(rec) -> str:
+    """투자의견 평균(1~5, 높을수록 매수) → 한글 라벨. 네이버 컨센서스 기준."""
+    if rec is None:
+        return None
+    if rec >= 4.5:
+        return "적극 매수"
+    if rec >= 3.5:
+        return "매수"
+    if rec >= 2.5:
+        return "중립(보유)"
+    if rec >= 1.5:
+        return "매도"
+    return "적극 매도"
+
+
+def analyst_info(code: str) -> dict:
+    """증권가 컨센서스(목표주가·투자의견) + 최근 증권사 리포트 + 동종업계 종목.
+    네이버 통합 API에서 추출. 실패하면 빈 값(설계 의도)."""
+    try:
+        d = _integration_raw(code)
+    except Exception:
+        return {}
+    out = {}
+
+    # 1) 컨센서스: 목표주가 평균 + 투자의견 평균
+    ci = d.get("consensusInfo") or {}
+    tgt = _parse_num(ci.get("priceTargetMean"))
+    rec = _parse_num(ci.get("recommMean"))
+    if tgt or rec:
+        out["consensus"] = {
+            "target_price": int(tgt) if tgt else None,
+            "recomm_mean": rec,
+            "recomm_label": _recomm_label(rec),
+            "as_of": ci.get("createDate"),
+        }
+
+    # 2) 최근 증권사 리포트(제목·증권사·날짜) — 최대 5건
+    reports = []
+    for x in (d.get("researches") or [])[:5]:
+        title = str(x.get("tit", "")).strip()
+        if title:
+            reports.append({
+                "broker": str(x.get("bnm", "")).strip(),
+                "title": title,
+                "date": str(x.get("wdt", "")).strip(),
+            })
+    if reports:
+        out["reports"] = reports
+
+    # 3) 동종업계 종목(자기 자신 제외) — 최대 5개
+    peers = []
+    for x in (d.get("industryCompareInfo") or []):
+        nm = str(x.get("stockName", "")).strip()
+        if nm and str(x.get("itemCode", "")) != code:
+            peers.append({"name": nm, "change_pct": _parse_num(x.get("fluctuationsRatio"))})
+        if len(peers) >= 5:
+            break
+    if peers:
+        out["peers"] = peers
+
+    return out
 
 
 @ttl_cache(600)  # PER/PBR 등은 10분 캐시
