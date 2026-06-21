@@ -43,7 +43,7 @@ cd stock-ai-frontend && npm install && npm run dev   # :5173
 
 ## 프론트엔드 (React 18 + Vite)
 - `src/App.jsx` — 탭 4개(왼→오): **오늘의 시장**(기본·홈) / 이슈 종목 / 종목 분석 / 투자 유형 테스트. 워드마크 클릭=오늘의 시장.
-- `src/components/MarketToday.jsx` — **오늘의 시장**: `/api/indices`로 코스피·코스닥·나스닥·다우 카드(값·등락률·**스파크라인 SVG**, 상승빨강/하락파랑) + `/api/market-analysis`로 시황·섹터 AI(`▌`2섹션). 그래프는 종가 시계열(추후 증권사 실시간 교체).
+- `src/components/MarketToday.jsx` — **오늘의 시장**: `/api/indices`로 코스피·코스닥·나스닥·다우 카드(값·등락률·**스파크라인 SVG**, 상승빨강/하락파랑) + `/api/market-analysis`로 시황·섹터 AI(`▌`2섹션). **섹터 섹션은 섹터·테마명(`SECTORS` 목록)을 형광펜 강조**(`highlightSectors`→`.sa-sector-hl` 바이올렛 마커). 그래프는 종가 시계열(추후 증권사 실시간 교체).
 - `src/components/Analyzer.jsx` — 점진적 로딩: `/api/stock`(가격·PER) 먼저 렌더 → `/api/details`·`/api/explain`·`/api/peers`는 각각 비동기로 뒤에 채움. 카드: AI 분석(`sa-analysis`, `▌`5섹션) + **동종업계 PER 비교표**(`sa-peer`, 중앙값보다 낮으면 파랑/높으면 빨강) + **증권가 카드**(목표주가·**상승여력 게이지** `sa-target-gauge`·투자의견·리포트). ※목표주가 '날짜별 추이'는 무료 시계열이 없어 미구현 → DB(Supabase) 도입 시 매일 스냅샷으로 구현 예정.
 - `src/api.js` — `VITE_API_BASE`로 백엔드 주소 분리(개발은 비워두면 vite proxy)
 - `src/components/IssueBoard.jsx` — trending 카드. 클릭 → 분석 탭으로 종목 전달(`pendingQuery`)

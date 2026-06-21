@@ -17,6 +17,25 @@ function parseAnalysis(text) {
   return out;
 }
 
+// 섹터 분석에서 강조할 섹터·테마 이름(긴 단어 우선 정렬로 부분매칭 방지)
+const SECTORS = [
+  "2차전지", "우주항공", "전기전자", "엔터테인먼트", "석유화학", "헬스케어", "의료기기",
+  "반도체", "디스플레이", "배터리", "바이오", "제약", "자동차", "철강", "조선", "건설",
+  "화학", "정유", "금융", "은행", "증권", "보험", "엔터", "게임", "인터넷", "통신",
+  "유통", "식음료", "식품", "화장품", "항공", "해운", "방산", "원자력", "로봇", "풍력",
+  "태양광", "신재생", "전력", "미디어", "콘텐츠", "패션", "의류", "가구", "에너지",
+  "여행", "제지", "시멘트", "비철금속", "조선", "농업", "방위산업",
+].sort((a, b) => b.length - a.length);
+const SECTOR_RE = new RegExp("(" + SECTORS.join("|") + ")", "g");
+
+// 텍스트 내 섹터 이름을 <mark>로 감싸 형광펜 강조 (React 노드 배열 반환)
+function highlightSectors(text) {
+  if (!text) return text;
+  return text.split(SECTOR_RE).map((p, i) =>
+    SECTORS.includes(p) ? <mark key={i} className="sa-sector-hl">{p}</mark> : p
+  );
+}
+
 // 종가 시계열 → 미니 그래프(SVG). 상승=빨강 / 하락=파랑 (한국 증시 관례)
 // ※ 추후 증권사 실시간 API로 데이터만 교체하면 그대로 동작
 function Sparkline({ series, up }) {
@@ -125,7 +144,9 @@ export default function MarketToday() {
               <div key={i} className="sa-analysis-section">
                 {i > 0 && sec.label && <div className="sa-analysis-divider" />}
                 {sec.label && <div className="sa-analysis-label">{sec.label}</div>}
-                <div className={sec.label ? "sa-analysis-text" : "sa-analysis-intro"}>{sec.text}</div>
+                <div className={sec.label ? "sa-analysis-text" : "sa-analysis-intro"}>
+                  {sec.label && sec.label.includes("섹터") ? highlightSectors(sec.text) : sec.text}
+                </div>
               </div>
             ))}
           </div>
