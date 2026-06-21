@@ -271,6 +271,11 @@
 .sa-report:first-of-type{border-top:none;}
 .sa-report .rt{font-size:14px;font-weight:700;color:var(--ink2);line-height:1.4;}
 .sa-report .rm{font-size:12px;color:var(--muted);margin-top:2px;}
+a.sa-report.link{display:block;text-decoration:none;cursor:pointer;transition:.12s;
+  margin:0 -8px;padding-left:8px;padding-right:8px;border-radius:10px;}
+a.sa-report.link:hover{background:var(--soft);}
+a.sa-report.link:hover .rt{color:var(--accent-d);}
+.sa-report .sa-newslink{color:var(--accent);font-weight:800;font-size:12px;}
 
 /* ── AI 분석 카드 ── */
 .sa-analysis{display:flex;flex-direction:column;gap:16px;}

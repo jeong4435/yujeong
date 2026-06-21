@@ -29,7 +29,7 @@ cd stock-ai-frontend && npm install && npm run dev   # :5173
 - `app/market.py` — FinanceDataReader(시세·등락률·종목명↔코드·trending·**지수**), **네이버 금융**(PER/PBR/EPS/예상PER + **애널리스트 정보**), `value_analysis`(밸류 해설). KRX 목록은 `lru_cache`. ※ pykrx 제거됨
   - `indices()` — 오늘의 시장: 코스피(KS11)·코스닥(KQ11)·나스닥(IXIC)·다우(DJI) 최신값+등락률+스파크라인용 종가 25개. 미국지수는 Change 없어 종가차로 계산. 캐시 300s. ※그래프는 추후 증권사 실시간 API로 교체 예정.
   - `_integration_raw(code)` — 네이버 통합API 원본(캐시 600s). 펀더멘털·애널리스트가 한 응답 → 1회 호출 공용.
-  - `analyst_info(code)` — **증권가 컨센서스**(목표주가 평균·투자의견 1~5→한글라벨) + **최근 증권사 리포트**(증권사·제목·날짜 5건) + **동종업계**(종목명·당일등락 5개). `consensusInfo`/`researches`/`industryCompareInfo`에서 추출.
+  - `analyst_info(code)` — **증권가 컨센서스**(목표주가 평균·투자의견 1~5→한글라벨) + **최근 증권사 리포트**(증권사·제목·날짜·**원문링크** 5건, url=`finance.naver.com/research/company_read.naver?nid={id}` 네이버 리서치 상세→PDF) + **동종업계**(종목명·당일등락 5개). `consensusInfo`/`researches`/`industryCompareInfo`에서 추출.
   - `peer_valuation(code)` — **동종업계 PER·PBR 비교표**(본인+같은 업종 4 + **중앙값**). peer코드는 `industryCompareInfo`의 itemCode, peer별 PER은 `fundamentals(peer)` 재사용. **평균 대신 중앙값**(적자·저이익 종목의 초고PER 이상치 방어). 캐시 1800s.
 - `app/dart.py` — **DART REST 직접호출**(corpCode.xml→기업코드 dict, fnlttSinglAcntAll.json→3년재무, list.json→공시). ※ OpenDartReader 제거됨(메모리 문제로 교체)
 - `app/news.py` — 네이버 종목 뉴스(최근 3개월).

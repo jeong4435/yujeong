@@ -289,15 +289,18 @@ def analyst_info(code: str) -> dict:
             "as_of": ci.get("createDate"),
         }
 
-    # 2) 최근 증권사 리포트(제목·증권사·날짜) — 최대 5건
+    # 2) 최근 증권사 리포트(제목·증권사·날짜·원문링크) — 최대 5건
+    #    링크는 네이버 리서치 상세(제목·증권사·원문 PDF). id로 구성.
     reports = []
     for x in (d.get("researches") or [])[:5]:
         title = str(x.get("tit", "")).strip()
+        rid = x.get("id")
         if title:
             reports.append({
                 "broker": str(x.get("bnm", "")).strip(),
                 "title": title,
                 "date": str(x.get("wdt", "")).strip(),
+                "url": f"https://finance.naver.com/research/company_read.naver?nid={rid}" if rid else None,
             })
     if reports:
         out["reports"] = reports

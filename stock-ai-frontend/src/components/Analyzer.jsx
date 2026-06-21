@@ -314,10 +314,17 @@ export default function Analyzer({ initialQuery, onConsumed }) {
                   <div style={{ marginTop: cons ? 16 : 0 }}>
                     <div className="sa-reports-h">최근 증권사 리포트</div>
                     {reports.map((r, i) => (
-                      <div className="sa-report" key={i}>
-                        <div className="rt">{r.title}</div>
-                        <div className="rm">{r.broker}{r.date ? " · " + fmtDate(r.date) : ""}</div>
-                      </div>
+                      r.url ? (
+                        <a className="sa-report link" key={i} href={r.url} target="_blank" rel="noopener noreferrer">
+                          <div className="rt">{r.title} <span className="sa-newslink">↗</span></div>
+                          <div className="rm">{r.broker}{r.date ? " · " + fmtDate(r.date) : ""}</div>
+                        </a>
+                      ) : (
+                        <div className="sa-report" key={i}>
+                          <div className="rt">{r.title}</div>
+                          <div className="rm">{r.broker}{r.date ? " · " + fmtDate(r.date) : ""}</div>
+                        </div>
+                      )
                     ))}
                   </div>
                 )}
