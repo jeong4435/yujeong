@@ -4,11 +4,11 @@ DART(전자공시)·KRX·야후에서 **진짜 주식 데이터**를 가져와 J
 프론트엔드는 이 서버만 호출하면 되고, API 키와 외부 호출은 전부 서버가 처리합니다.
 
 ## 가져오는 데이터
-- **시세·거래량·등락률** — FinanceDataReader (KRX/네이버/야후)
-- **PER·PBR·EPS·예상PER** — 네이버 금융
-- **재무제표 3개년(매출·영업이익·순이익)·최근 공시** — OpenDART (`OpenDartReader`)
+- **시세·거래량·등락률·지수(코스피·코스닥·나스닥·다우)** — FinanceDataReader
+- **PER·PBR·EPS·예상PER + 증권가 컨센서스(목표주가·투자의견)·증권사 리포트·동종업계** — 네이버 금융
+- **재무제표 3개년(매출·영업이익·순이익)·최근 공시** — DART REST 직접호출 (※`OpenDartReader`는 메모리 문제로 제거됨)
 - **최근 3개월 종목 뉴스** — 네이버 금융 뉴스
-- (선택) **고등학생 눈높이 설명** — Anthropic API. `ANTHROPIC_API_KEY`가 있을 때만 작동
+- **AI 분석**(종목 5섹션·오늘의 시황·섹터) — **Google Gemini**(`gemini-2.5-flash`, 무료). `GEMINI_API_KEY`가 있을 때만 작동
 
 ## 실행 방법
 
@@ -21,7 +21,7 @@ source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
 # 3) 키 확인 — .env 에 DART_API_KEY 가 들어 있습니다.
-#    (설명 기능을 쓰려면 .env 에 ANTHROPIC_API_KEY 도 채우세요)
+#    (AI 분석을 쓰려면 .env 에 GEMINI_API_KEY 도 채우세요 — Google AI Studio 무료 발급)
 
 # 4) 실행
 uvicorn app.main:app --reload
@@ -33,8 +33,11 @@ uvicorn app.main:app --reload
 | 경로 | 설명 |
 |---|---|
 | `GET /api/stock/005930` | 1차(빠름): 시세·PER·밸류해설 |
-| `GET /api/details/005930` | 2차(느림): 3개년 재무·공시·뉴스 |
-| `GET /api/analyze/005930` | 전체 + (키 있으면) 쉬운 설명 |
+| `GET /api/details/005930` | 2차(느림): 3개년 재무·공시·뉴스·애널리스트 |
+| `GET /api/peers/005930` | 동종업계 PER·PBR 비교(중앙값) |
+| `GET /api/explain/005930` | AI 5섹션 분석(키 있을 때) |
+| `GET /api/indices` | 오늘의 시장: 코스피·코스닥·나스닥·다우 |
+| `GET /api/market-analysis` | 오늘의 시황·섹터 AI 분석 |
 | `GET /api/trending` | 이슈 종목(거래대금 상위·급등·급락) |
 | `GET /api/health` | 키 로드 상태 확인 |
 

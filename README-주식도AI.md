@@ -18,7 +18,7 @@
 - **Windows**: `start-frontend.bat` 더블클릭
 - **macOS/Linux**: `bash start-frontend.sh`
 
-브라우저에서 **http://localhost:5173** → 🔥 이슈 종목 / 📈 종목 분석 / 🧭 내 유형 탭 테스트.
+브라우저에서 **http://localhost:5173** → 오늘의 시장 / 이슈 종목 / 종목 분석 / 투자 유형 테스트 탭.
 
 ## 자주 겪는 문제
 
@@ -30,9 +30,10 @@
 | 이슈 종목 로딩이 오래 걸림 | 전 종목 시세를 받아 정렬해서 그래요 (10~20초 정도) |
 | `pip`/`npm` 없다고 나옴 | Python(python.org) / Node.js(nodejs.org LTS) 설치 후 재실행 |
 
-## (선택) "주식도AI 한마디" 켜기
-`stock-ai-backend/.env` 에 `ANTHROPIC_API_KEY=sk-ant-...` 를 추가하면
-진짜 숫자를 고등학생 눈높이로 풀어주는 한마디가 화면에 나타나요. (console.anthropic.com에서 키 발급)
+## (선택) AI 분석 켜기
+`stock-ai-backend/.env` 에 `GEMINI_API_KEY=...` 를 추가하면
+진짜 숫자를 고등학생 눈높이로 풀어주는 AI 분석(종목 5섹션·시황·섹터)이 화면에 나타나요.
+(Google AI Studio **aistudio.google.com** 에서 무료 발급)
 
 ## 보안
 `.env` 의 DART 키는 깃·공개 장소에 올리지 마세요. 노출됐다면 opendart.fss.or.kr 에서 재발급.

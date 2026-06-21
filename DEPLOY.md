@@ -14,7 +14,7 @@
 4. **Apply** → 서비스 `jusikdo-ai-backend` 생성됨
 5. 생성 후 **Environment** 탭에서 비밀값 입력:
    - `DART_API_KEY` = (본인 OpenDART 인증키)
-   - `ANTHROPIC_API_KEY` = (선택, AI 설명 쓸 때만. 안 쓰면 비워둠)
+   - `GEMINI_API_KEY` = (AI 분석용. Google AI Studio aistudio.google.com 무료 발급. 없으면 AI 분석·시황·섹터 카드가 안 뜸)
 6. 첫 빌드 5~10분. 완료되면 주소가 생겨요:
    **`https://jusikdo-ai-backend.onrender.com`** (이름은 다를 수 있음)
 7. 확인: 브라우저로 `…onrender.com/api/health` → `{"ok":true, ...}` 나오면 성공 ✅
