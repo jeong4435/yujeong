@@ -3,6 +3,7 @@ import MarketToday from "./components/MarketToday.jsx";
 import Analyzer from "./components/Analyzer.jsx";
 import IssueBoard from "./components/IssueBoard.jsx";
 import Quiz from "./components/Quiz.jsx";
+import AuthButton from "./components/AuthButton.jsx";
 
 export default function App() {
   const [tab, setTab] = useState("market");
@@ -19,8 +20,11 @@ export default function App() {
     <div className="sa-root">
       <div className="sa-wrap">
         <div className="sa-top">
-          <div className="sa-brand">
-            <h1 className="sa-wordmark" onClick={() => setTab("market")}>주식도 <span className="br">AI</span></h1>
+          <div className="sa-topbar">
+            <div className="sa-brand">
+              <h1 className="sa-wordmark" onClick={() => setTab("market")}>주식도 <span className="br">AI</span></h1>
+            </div>
+            <AuthButton />
           </div>
           <div className="sa-tag">DART·KRX에서 가져온 진짜 데이터를, 쉽게 풀어드려요.</div>
         </div>
