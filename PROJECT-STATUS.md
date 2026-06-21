@@ -110,10 +110,10 @@ uvicorn app.main:app --reload     # :8000
 # 프론트 (개발 중엔 VITE_API_BASE 비워두면 vite proxy가 8000으로 넘김)
 cd stock-ai-frontend && npm install && npm run dev   # :5173
 ```
-- 의존성(백엔드): `fastapi, uvicorn, finance-datareader, requests, anthropic, python-dotenv` (※ pykrx·opendartreader 제거됨)
+- 의존성(백엔드): `fastapi, uvicorn, finance-datareader, requests, lxml, google-generativeai, python-dotenv` (※ pykrx·opendartreader·anthropic 제거됨)
 - 핵심 파일:
-  - 백엔드: `app/main.py`(라우트·`_core`/`_details`/`_collect`·startup prewarm), `app/market.py`(quote·fundamentals·value_analysis·resolve·trending), `app/dart.py`(REST: corp map·financials 3년·disclosures), `app/news.py`, `app/cache.py`, `app/explain.py`
-  - 프론트: `src/api.js`(VITE_API_BASE), `src/components/Analyzer.jsx`(점진로딩·추세표·뉴스), `Quiz.jsx`+`quizData.js`(투자유형 테스트: KOFIA 표준 7문항·가중평균→5등급), `MyStocks.jsx`(종목분석 상단 '내 보유 주식' 자리, 로그인 전 placeholder), `IssueBoard.jsx`, `src/styles.css`
+  - 백엔드: `app/main.py`(라우트·`_core`/`_details`/`_collect`·startup prewarm), `app/market.py`(quote·fundamentals·value_analysis·trending·**indices**·**analyst_info**·**peer_valuation**), `app/dart.py`(REST: corp map·financials 3년·disclosures), `app/news.py`, `app/cache.py`, `app/explain.py`(**Gemini**: `explain`종목5섹션·`market_overview`시황섹터)
+  - 프론트: `src/api.js`(VITE_API_BASE), `src/supabase.js`(Supabase 클라이언트), `src/components/MarketToday.jsx`(오늘의 시장: 지수·시황·섹터), `Analyzer.jsx`(점진로딩·AI분석·동종업계PER·증권가카드), `Quiz.jsx`+`quizData.js`(KOFIA 5등급), `MyStocks.jsx`(잔고 자리·placeholder), `IssueBoard.jsx`, `src/styles.css`
   - 배포: `render.yaml`, `DEPLOY.md`, `stock-ai-*/.env.example`
 
 ## 9. 제품 원칙 (절대 위반 금지)
@@ -177,30 +177,31 @@ b의 모든 기능은 **"내 데이터를 저장"** 해야 하므로 **로그인
 - **KIS 실시간(향후)**: 나중에 잔고 자동 불러오기로 Phase 2~3 수동입력을 일부 대체 가능(수동 시작 → KIS 자동화가 자연스러운 진화). 공식 OAuth/앱키만.
 - **AI**: ~~우선순위 낮음~~ → **2026-06-17 재조정: 최우선**. **Google Gemini**(`gemini-2.5-flash`, 무료) 채택·연결 완료(Anthropic은 비용 때문에 미채택). 종목 5섹션·시황·섹터 분석 작동 중. 규제상 직접 매수/매도 권유는 금지(데이터 해석·근거 제시만).
 
-## 추천 토대 기술 — Supabase
-무료 한 곳에서 **구글 로그인 + Postgres DB + 행단위보안(RLS)** 제공. 현재 배포(Vercel·Render)와 잘 붙고 월 ₩0 유지.
+## 토대 기술 — Supabase **✅도입됨(2026-06-21)**
+무료 한 곳에서 **로그인(소셜/이메일) + Postgres DB + 행단위보안(RLS)** 제공. 현재 배포(Vercel·Render)와 잘 붙고 월 ₩0 유지. 프로젝트 생성·`holdings` 표·앱 연결(`src/supabase.js`)까지 완료. 로그인 방식(구글/카카오/이메일)은 미정.
 **구조 방침**: Supabase를 "데이터+로그인" 계층으로 두고 **프론트가 직접 통신**. 파이썬 백엔드는 지금처럼 **상태 없는 계산·시세 서버**로 유지(잔고·유형을 파라미터로 받아 계산·멘트만). → 백엔드에 DB·비밀번호를 넣지 않아 단순·저비용 유지.
 
 ## 데이터 모델 (Supabase, 누적 설계)
-- `profiles` (Phase 1): `id`(=구글 유저), `invest_score`(5~15), `invest_type`(safe/balanced/challenge/highrisk), `updated_at`
-- `holdings` (Phase 2): `id`, `user_id`, `stock_code`, `stock_name`, `quantity`, `avg_price`, `updated_at` — 현재 잔고 스냅샷
-- `transactions` (Phase 3): `id`, `user_id`, `stock_code`, `side`(buy/sell), `quantity`, `price`, `traded_at` — 거래 로그. 입력 시 `holdings` 평단·수량 재계산(매수=가중평균, 매도=수량차감, 평단 유지)
-- 전 테이블 **RLS: 자기 행만 read/write**.
+- `holdings` (Phase 1) **✅생성 완료(2026-06-21)**: `id`, `user_id`, `stock_code`, `stock_name`, `quantity`, `avg_price`, `updated_at`, `unique(user_id,stock_code)` — 현재 잔고 스냅샷
+- `transactions` (Phase 2, 예정): `id`, `user_id`, `stock_code`, `side`(buy/sell), `quantity`, `price`, `traded_at` — 거래 로그. 입력 시 `holdings` 평단·수량 재계산(매수=가중평균, 매도=수량차감, 평단 유지)
+- `profiles` (Phase 4, 예정·중요도 낮음): `id`(=user), `invest_type`(KOFIA 5등급), `invest_score`(0~100), `updated_at`
+- 전 테이블 **RLS: 자기 행만 read/write**(holdings는 적용 완료).
 
-## Phase 1 상세 계획 (다음 세션에서 여기부터 시작) — 로그인 선택제 확정
-**목표**: 구글 로그인(선택) → 내 유형 저장 → 분석 멘트가 내 유형에 맞게 바뀐다. **비로그인은 지금처럼 전부 동작.**
+## 진행 현황 — Phase 0 완료, Phase 1(잔고) 시작 예정
+- **Phase 0 토대 ✅(2026-06-21)**: Supabase 프로젝트 생성 + `holdings` 표(RLS) + 앱 연결(`@supabase/supabase-js`, `src/supabase.js`). URL·anon키는 로컬 `.env`에만(깃 제외). **남은 셋업**: Vercel 환경변수(`VITE_SUPABASE_URL`·`VITE_SUPABASE_ANON_KEY`) 등록 — 로그인 만들 때.
 
+### Phase 1 상세 계획 (다음 세션 시작점) — **로그인 + 잔고(holdings)**
+**목표**: 로그인하면 종목분석 하단 "내 보유주식"에서 **종목·수량·평단을 입력→저장**하고, 내 잔고 목록(평가손익)을 본다. **비로그인은 지금처럼 전부 동작.**
 - **작업 순서**
-  1. **0단계 셋업**: Supabase 프로젝트 생성 + 구글 클라우드 OAuth 키 발급 → Supabase에 연결 (사용자가 클릭, 가이드 제공)
-  2. **로그인**: `@supabase/supabase-js` 추가, 구글 로그인/로그아웃/세션, 우상단 프로필. 환경변수 `VITE_SUPABASE_URL`·`VITE_SUPABASE_ANON_KEY`(Vercel + `.env.example`)
-  3. **내 유형 저장**: `Quiz.jsx` 완료 시 로그인 상태면 `profiles`에 upsert, 재방문 시 불러오기(비로그인은 기존 로컬 동작 유지)
-  4. **멘트 개인화**: 백엔드 `value_analysis(fu, fin, user_type)`로 확장 → 유형별 맞춤 한마디 추가, `api.js`가 `?type=` 전달, 밸류 카드에 "🧭 내 유형에게" 노출
-  5. 검증 + `git push`(자동 배포)
+  1. **로그인**: 로그인 방식 결정(구글/카카오/이메일) → 버튼/세션/로그아웃, 우상단 프로필. Vercel 환경변수 등록.
+  2. **잔고 입력**: `MyStocks.jsx`(이미 placeholder)에서 종목 검색·수량·평단 입력 → `holdings`에 upsert.
+  3. **잔고 표시**: 내 보유종목 목록 + 현재가(기존 `/api/stock` 재활용)로 평가손익 계산. 종목 클릭→분석 연결(이미 됨).
+  4. 검증 + `git push`.
 
-## Phase 2~4 미리보기 (Phase 1 끝나면 상세화)
-- **Phase 2 잔고**: `holdings` 테이블 + 수동 입력 폼 + "내 잔고" 탭. 현재가는 **기존 `/api/stock` 재활용**, 평가손익 계산.
-- **Phase 3 히스토리**: `transactions` 테이블 + 매수/매도 입력 → 평단 자동 재계산(우선 프론트 JS, 추후 DB 트리거로 견고화).
-- **Phase 4 조언**: 백엔드 `POST /api/portfolio/analyze`(잔고 받아 섹터 분포·집중도(HHI)·top비중 계산 + 규칙기반 코멘트). 섹터 데이터는 **FDR 종목목록의 업종 컬럼 활용**(새 의존성 없음, 컬럼 실제 검증 필요). 내 유형과 연결해 "🧭 참견" 한마디. ⚠️ 매수/매도 권유 아님 — 교육·정보 한정.
+### Phase 2~4 미리보기 (Phase 1 끝나면 상세화)
+- **Phase 2 매매 히스토리**: `transactions` 테이블 + 매수/매도 입력 → `holdings` 평단·수량 자동 재계산(우선 프론트 JS, 추후 DB 트리거로 견고화).
+- **Phase 3 포트폴리오 조언**: 백엔드 `POST /api/portfolio/analyze`(잔고 받아 섹터 분포·집중도(HHI)·top비중 + 규칙기반 코멘트). 섹터 데이터 소스 검증 필요(FDR엔 업종 컬럼 없음 — 네이버 industryCode 등 대안). ⚠️ 매수/매도 권유 아님 — 교육·정보 한정.
+- **Phase 4 투자유형 개인화(중요도 낮음)**: 퀴즈 유형을 `profiles`에 저장 → 분석 멘트 개인화.
 
 ## 그 외 소소한 후보 (대화에서 언급됨)
 - 영업이익 3개년 추세 **그래프**(현재는 표)
