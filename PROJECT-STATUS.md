@@ -1,4 +1,4 @@
-# 주식도 AI — 프로젝트 현황 & 인수인계 (2026-06-21 기준, 배포 완료 · AI 분석 고도화 1~3차 완료)
+# 주식도 AI — 프로젝트 현황 & 인수인계 (2026-06-22 기준, 배포 완료 · AI 분석 고도화 1~3차 + 구글 로그인 완료)
 
 > 이 문서 하나로 다음 세션이 프로젝트 전체를 이해할 수 있게 정리했습니다.
 > 원래의 claude.ai 시작 맥락은 `HANDOFF.md`, Claude Code용 작업 지침은 `CLAUDE.md` 참고.
@@ -9,7 +9,7 @@
 ## 1. 한 줄 요약
 한국 주식을 **고등학생 눈높이**로 풀어주는 학습용 웹앱. DART·네이버·KRX의 **진짜 데이터**를 모아 "이 가격이 싼지 비싼지", "회사가 돈을 잘 버는지(3년 추세)", "최근 공시·뉴스", **증권가 컨센서스(목표주가·리포트)·동종업계 비교**를 쉽게 보여주고, **Gemini AI가 개별 종목(5섹션)·오늘의 시황·섹터를 분석**해준다. **이미 무료로 실배포 완료**.
 
-> **앱 핵심 3요소**(꼭 기억): ①종목 정보 취합(됨) ②**AI 분석·조언(시장·섹터·종목) = 핵심 차별점**(1~3차 완료) ③로그인 시 개인 포트폴리오(미착수). 우선순위는 ②먼저 → ③(Supabase)는 그 다음.
+> **앱 핵심 3요소**(꼭 기억): ①종목 정보 취합(됨) ②**AI 분석·조언(시장·섹터·종목) = 핵심 차별점**(1~3차 완료) ③로그인 시 개인 포트폴리오(**구글 로그인 ✅완료(2026-06-22)** → 다음=잔고 입력). 우선순위는 ②먼저 → ③(Supabase)는 그 다음.
 
 ## 2. 배포 현황 (실서비스 운영 중)
 | 구성 | 주소 / 위치 | 비고 |
@@ -21,7 +21,7 @@
 | 💰 비용 | **월 ₩0** | 무료 티어 조합(A안) |
 
 - **업데이트 방법**: 코드 수정 후 `git push` → Vercel·Render가 **자동 재배포**.
-- **프론트 환경변수**(Vercel): `VITE_API_BASE = https://jusikdo-ai-backend.onrender.com`
+- **프론트 환경변수**(Vercel): `VITE_API_BASE = https://jusikdo-ai-backend.onrender.com`, **`VITE_SUPABASE_URL`·`VITE_SUPABASE_ANON_KEY`**(로그인, 2026-06-22 등록, Production·Sensitive). ※anon키는 브라우저 공개용이라 노출 안전.
 - **백엔드 환경변수**(Render): `DART_API_KEY`(필수, 재무·공시), **`GEMINI_API_KEY`(필수, AI 분석 — Google AI Studio 무료 발급)**. ※Anthropic은 비용 때문에 미채택.
 - 배포 절차 상세: `DEPLOY.md`
 
@@ -83,6 +83,9 @@
 21. **'오늘의 시장' 탭 신설(AI 분석 고도화 2차 = 시황·섹터)** — 핵심3요소 ②의 "시장·섹터" 충족. **가장 왼쪽·기본(홈) 탭**. 상단: **코스피·코스닥·나스닥·다우** 지수카드(값·등락률·**스파크라인 SVG 그래프**, 상승빨강/하락파랑) — `market.indices()`(FDR, 미국지수는 종가차로 등락 계산, 종가25개 시계열). 하단: **시황·섹터 AI 분석**(`explain.market_overview` → ▌시황·▌섹터 2섹션, 지수+거래대금/급등/급락 종목으로 업종 추론). 엔드포인트 `/api/indices`(빠름)·`/api/market-analysis`(AI). 프론트 `MarketToday.jsx`. ⚠️**그래프는 종가 기준 플레이스홀더 — 추후 증권사 실시간 API 연동 예정**(사용자 요청). 로컬 E2E 검증(지수4·스파크라인25p·폴백) 완료.
 22. **동종업계 PER 비교표 + 목표주가 게이지(AI 분석 고도화 3차)** — `market.peer_valuation()`: `industryCompareInfo`의 itemCode로 같은 업종 4종목 + 본인의 PER/PBR을 `fundamentals()` 재사용해 표로(중앙값 기준선, **평균 아님** — 적자종목 초고PER 이상치 방어). `/api/peers/{q}` 별도 로드. 프론트 **'비교' 표 카드**(`sa-peer`: 중앙값보다 PER 낮으면 파랑·높으면 빨강) + 증권가 카드에 **목표주가 게이지**(`sa-target-gauge`: 현재가→목표가 상승여력 시각화). ⚠️**목표주가 '날짜별 추이 추적'은 무료 시계열 데이터가 없어 미구현**(네이버는 현재 스냅샷만, 이력 엔드포인트 404) → **DB(Supabase) 도입 시 매일 컨센서스 스냅샷 저장으로 구현 예정**. 로컬 E2E 검증(삼성전자 vs SK하이닉스 등 PER 비교·게이지 79.5%) 완료.
 
+### 다음 세션 (2026-06-22) — Phase 1-1 구글 로그인
+23. **구글 로그인 도입(Phase 1-1, 앱 핵심 3요소 ③의 시작)** — 핵심3요소 ③ "로그인 시 개인 포트폴리오"의 토대인 **로그인**을 구현·배포. **Supabase Auth + 구글 OAuth**. ⓐ 외부 설정: 구글 클라우드에 OAuth 클라이언트(웹) 발급(consent External·게시, redirect=`<supabase>/auth/v1/callback`) → Supabase Authentication에서 **Google provider Enable** + 키 등록 + **URL Configuration**(Site URL=vercel, Redirect URLs=`localhost:5173/**`·`jusikdo-ai.vercel.app/**`) → **Vercel 환경변수**(`VITE_SUPABASE_URL`·`VITE_SUPABASE_ANON_KEY`, Production) 등록. ⓑ 코드: `src/auth.js`(`useSession` 훅=getSession+onAuthStateChange 구독, `signInWithGoogle`=`signInWithOAuth` redirectTo=origin, `signOut`, `displayName/avatarUrl`) + `src/components/AuthButton.jsx`(우상단 헤더: 비로그인=구글 로그인 버튼/로그인=아바타+이름+로그아웃) + `App.jsx` 헤더를 `.sa-topbar` flex로 바꿔 우상단 배치 + `MyStocks.jsx`가 하드코딩 `loggedIn=false` 제거하고 **실제 세션** 연동. ⓒ 안전장치: env 없으면 `AuthButton`은 렌더 안 하고 로그인 UI만 비활성(앱 나머지는 그대로). ⓓ 검증: `npm run build` 통과 + 로컬 dev 렌더 + **Supabase authorize→accounts.google.com 302 체인 확인** + 배포 후 라이브 번들에 Supabase 키 포함 확인 + **실제 구글 로그인 성공**(우상단 프로필·로그아웃 표시). 비용 ₩0(구글 OAuth·Supabase 무료). ※anon키는 공개용이라 노출 안전(보안은 RLS가 담당).
+
 ## 6. 주요 설계 결정 (왜 이렇게 했나)
 - **하이브리드**: 숫자는 실제 API 값, AI/텍스트는 "설명만". 환각으로 가격이 틀릴 가능성 차단.
 - **죽지 않는 백엔드**: 모든 외부 호출 try/except → 빈 값. 한 소스 실패해도 전체는 200.
@@ -113,7 +116,7 @@ cd stock-ai-frontend && npm install && npm run dev   # :5173
 - 의존성(백엔드): `fastapi, uvicorn, finance-datareader, requests, lxml, google-generativeai, python-dotenv` (※ pykrx·opendartreader·anthropic 제거됨)
 - 핵심 파일:
   - 백엔드: `app/main.py`(라우트·`_core`/`_details`/`_collect`·startup prewarm), `app/market.py`(quote·fundamentals·value_analysis·trending·**indices**·**analyst_info**·**peer_valuation**), `app/dart.py`(REST: corp map·financials 3년·disclosures), `app/news.py`, `app/cache.py`, `app/explain.py`(**Gemini**: `explain`종목5섹션·`market_overview`시황섹터)
-  - 프론트: `src/api.js`(VITE_API_BASE), `src/supabase.js`(Supabase 클라이언트), `src/components/MarketToday.jsx`(오늘의 시장: 지수·시황·섹터), `Analyzer.jsx`(점진로딩·AI분석·동종업계PER·증권가카드), `Quiz.jsx`+`quizData.js`(KOFIA 5등급), `MyStocks.jsx`(잔고 자리·placeholder), `IssueBoard.jsx`, `src/styles.css`
+  - 프론트: `src/api.js`(VITE_API_BASE), `src/supabase.js`(Supabase 클라이언트), `src/auth.js`(로그인 세션 훅·구글 로그인/로그아웃), `src/components/AuthButton.jsx`(우상단 로그인/프로필), `MarketToday.jsx`(오늘의 시장: 지수·시황·섹터), `Analyzer.jsx`(점진로딩·AI분석·동종업계PER·증권가카드), `Quiz.jsx`+`quizData.js`(KOFIA 5등급), `MyStocks.jsx`(로그인 세션 연동·잔고 입력 자리), `IssueBoard.jsx`, `src/styles.css`
   - 배포: `render.yaml`, `DEPLOY.md`, `stock-ai-*/.env.example`
 
 ## 9. 제품 원칙 (절대 위반 금지)
@@ -187,16 +190,18 @@ b의 모든 기능은 **"내 데이터를 저장"** 해야 하므로 **로그인
 - `profiles` (Phase 4, 예정·중요도 낮음): `id`(=user), `invest_type`(KOFIA 5등급), `invest_score`(0~100), `updated_at`
 - 전 테이블 **RLS: 자기 행만 read/write**(holdings는 적용 완료).
 
-## 진행 현황 — Phase 0 완료, Phase 1(잔고) 시작 예정
-- **Phase 0 토대 ✅(2026-06-21)**: Supabase 프로젝트 생성 + `holdings` 표(RLS) + 앱 연결(`@supabase/supabase-js`, `src/supabase.js`). URL·anon키는 로컬 `.env`에만(깃 제외). **남은 셋업**: Vercel 환경변수(`VITE_SUPABASE_URL`·`VITE_SUPABASE_ANON_KEY`) 등록 — 로그인 만들 때.
+## 진행 현황 — Phase 0 완료 · Phase 1-1(로그인) 완료 · Phase 1-2(잔고 입력) 다음
+- **Phase 0 토대 ✅(2026-06-21)**: Supabase 프로젝트 생성 + `holdings` 표(RLS) + 앱 연결(`@supabase/supabase-js`, `src/supabase.js`).
+- **Phase 1-1 로그인 ✅완료·배포(2026-06-22)**: **구글 로그인**(Supabase Auth). 구글 클라우드 OAuth + Supabase Google provider·Redirect URLs + Vercel 환경변수(`VITE_SUPABASE_*`) 등록. 코드=`src/auth.js`·`AuthButton.jsx`·`MyStocks.jsx` 세션 연동. **실제 로그인 성공 확인**. 상세는 §5의 23번.
 
-### Phase 1 상세 계획 (다음 세션 시작점) — **로그인 + 잔고(holdings)**
+### Phase 1-2 상세 계획 (다음 세션 시작점) — **잔고(holdings) 입력·표시**
 **목표**: 로그인하면 종목분석 하단 "내 보유주식"에서 **종목·수량·평단을 입력→저장**하고, 내 잔고 목록(평가손익)을 본다. **비로그인은 지금처럼 전부 동작.**
+- **선행 완료**: 로그인·세션(`useSession`)·`MyStocks` 진입점은 이미 붙어 있음(로그인 시 "로그인 완료!" 빈 상태 표시 중).
 - **작업 순서**
-  1. **로그인**: 로그인 방식 결정(구글/카카오/이메일) → 버튼/세션/로그아웃, 우상단 프로필. Vercel 환경변수 등록.
-  2. **잔고 입력**: `MyStocks.jsx`(이미 placeholder)에서 종목 검색·수량·평단 입력 → `holdings`에 upsert.
-  3. **잔고 표시**: 내 보유종목 목록 + 현재가(기존 `/api/stock` 재활용)로 평가손익 계산. 종목 클릭→분석 연결(이미 됨).
-  4. 검증 + `git push`.
+  1. **잔고 입력**: `MyStocks.jsx`에 종목 검색(기존 종목명↔코드)·수량·평단 입력 폼 → `supabase.from('holdings').upsert({user_id, stock_code, stock_name, quantity, avg_price})`. RLS가 본인 행만 허용.
+  2. **잔고 표시**: 로그인 시 `holdings` select → 목록 렌더 + 각 종목 현재가(기존 `/api/stock` 재활용)로 **평가손익** 계산. 종목 클릭→분석 연결(이미 됨, `onPick`).
+  3. 수정/삭제(수량·평단 편집, 삭제) UI.
+  4. 검증(로그인→입력→새로고침 후 유지→평가손익) + `git push`.
 
 ### Phase 2~4 미리보기 (Phase 1 끝나면 상세화)
 - **Phase 2 매매 히스토리**: `transactions` 테이블 + 매수/매도 입력 → `holdings` 평단·수량 자동 재계산(우선 프론트 JS, 추후 DB 트리거로 견고화).
