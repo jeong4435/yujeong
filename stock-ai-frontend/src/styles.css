@@ -8,6 +8,7 @@
   --accent:#6C5CE7; --accent-d:#5B4BD6; --accent-soft:#F0EEFF;
   --up:#F04452; --up-soft:#FDECEC; --down:#3182F6; --down-soft:#EAF2FE;
   --line-soft:#F4F6F8; --shadow:rgba(25,31,40,.06);
+  --mark:#FFF3A0; /* 본문 강조용 연노란 형광펜(2026-06-21~). ※'한마디' 박스는 무채색 유지 */
   font-family:'Pretendard',system-ui,sans-serif;
   background:var(--bg); color:var(--ink);
   min-height:100vh; line-height:1.55; letter-spacing:-.02em;
@@ -280,14 +281,19 @@ a.sa-report.link:hover .rt{color:var(--accent-d);}
 /* ── AI 분석 카드 ── */
 .sa-analysis{display:flex;flex-direction:column;gap:16px;}
 .sa-analysis-section{}
-.sa-analysis-label{font-size:12px;font-weight:800;color:var(--accent-d);
-  background:var(--accent-soft);display:inline-block;padding:3px 10px;
-  border-radius:999px;margin-bottom:7px;letter-spacing:0;}
+/* 섹션 제목 = 진한 회색 글씨 + 연노란 형광펜(2026-06-21~, 바이올렛 칩 폐기) */
+.sa-analysis-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.sa-analysis-label{font-size:14px;font-weight:800;color:var(--ink);letter-spacing:-.01em;
+  background:linear-gradient(transparent 12%, var(--mark) 12%, var(--mark) 92%, transparent 92%);
+  padding:0 3px;border-radius:2px;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;}
+.sa-analysis-sum{font-size:12.5px;font-weight:600;color:var(--muted);line-height:1.45;}
 .sa-analysis-text{font-size:14.5px;line-height:1.72;color:#4E5968;white-space:pre-wrap;}
 .sa-analysis-intro{font-size:13px;line-height:1.6;color:var(--muted);white-space:pre-wrap;margin-bottom:2px;}
-/* 섹터 이름 형광펜 강조 (바이올렛 마커 느낌) */
-.sa-sector-hl{background:linear-gradient(transparent 55%, var(--accent-soft) 55%);
-  color:var(--accent-d);font-weight:800;padding:0 2px;border-radius:3px;}
+/* 본문 강조(섹터명 등) = 연노란 형광펜 + 진한 회색 글씨 (앱 공통 강조 스타일) */
+.sa-sector-hl{background:linear-gradient(transparent 12%, var(--mark) 12%, var(--mark) 92%, transparent 92%);
+  color:var(--ink);font-weight:800;padding:0 2px;border-radius:2px;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;}
 .sa-analysis-divider{height:1px;background:var(--line);margin:4px 0;}
 .sa-analysis-loading{display:flex;align-items:center;gap:10px;padding:18px 0;color:var(--muted);}
 .sa-analysis-loading .sa-spin{flex-shrink:0;}

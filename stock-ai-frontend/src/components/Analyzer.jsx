@@ -30,18 +30,23 @@ function trendComment(t) {
   return (head + tail).trim();
 }
 // Gemini 분석 텍스트 파싱 (▌섹션 구분자)
-// 첫 ▌ 이전(머리말/인사말)은 라벨 없는 인트로로 처리.
+// 머리줄은 "제목 :: 한 줄 요약" → {label, summary}. 첫 ▌ 이전(인사말)은 라벨 없는 인트로.
 function parseAnalysis(text) {
   if (!text) return [];
   const out = [];
   text.split("▌").forEach((part, i) => {
     const seg = part.trim();
     if (!seg) return;
-    if (i === 0) { out.push({ label: "", text: seg }); return; }  // 머리말
+    if (i === 0) { out.push({ label: "", summary: "", text: seg }); return; }  // 인사말
     const nl = seg.indexOf("\n");
-    out.push(nl === -1
-      ? { label: seg, text: "" }
-      : { label: seg.slice(0, nl).trim(), text: seg.slice(nl).trim() });
+    const head = (nl === -1 ? seg : seg.slice(0, nl)).trim();
+    const body = nl === -1 ? "" : seg.slice(nl + 1).trim();
+    const di = head.indexOf("::");
+    out.push({
+      label: (di === -1 ? head : head.slice(0, di)).trim(),
+      summary: di === -1 ? "" : head.slice(di + 2).trim(),
+      text: body,
+    });
   });
   return out;
 }
@@ -194,7 +199,12 @@ export default function Analyzer({ initialQuery, onConsumed }) {
                 {parseAnalysis(explanation).map((sec, i) => (
                   <div key={i} className="sa-analysis-section">
                     {i > 0 && sec.label && <div className="sa-analysis-divider" />}
-                    {sec.label && <div className="sa-analysis-label">{sec.label}</div>}
+                    {sec.label && (
+                      <div className="sa-analysis-head">
+                        <span className="sa-analysis-label">{sec.label}</span>
+                        {sec.summary && <span className="sa-analysis-sum">{sec.summary}</span>}
+                      </div>
+                    )}
                     <div className={sec.label ? "sa-analysis-text" : "sa-analysis-intro"}>{sec.text}</div>
                   </div>
                 ))}
