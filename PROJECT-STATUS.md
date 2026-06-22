@@ -184,11 +184,13 @@ b의 모든 기능은 **"내 데이터를 저장"** 해야 하므로 **로그인
 무료 한 곳에서 **로그인(소셜/이메일) + Postgres DB + 행단위보안(RLS)** 제공. 현재 배포(Vercel·Render)와 잘 붙고 월 ₩0 유지. 프로젝트 생성·`holdings` 표·앱 연결(`src/supabase.js`)까지 완료. 로그인 방식(구글/카카오/이메일)은 미정.
 **구조 방침**: Supabase를 "데이터+로그인" 계층으로 두고 **프론트가 직접 통신**. 파이썬 백엔드는 지금처럼 **상태 없는 계산·시세 서버**로 유지(잔고·유형을 파라미터로 받아 계산·멘트만). → 백엔드에 DB·비밀번호를 넣지 않아 단순·저비용 유지.
 
-## 데이터 모델 (Supabase, 누적 설계)
-- `holdings` (Phase 1) **✅생성 완료(2026-06-21)**: `id`, `user_id`, `stock_code`, `stock_name`, `quantity`, `avg_price`, `updated_at`, `unique(user_id,stock_code)` — 현재 잔고 스냅샷
-- `transactions` (Phase 2, 예정): `id`, `user_id`, `stock_code`, `side`(buy/sell), `quantity`, `price`, `traded_at` — 거래 로그. 입력 시 `holdings` 평단·수량 재계산(매수=가중평균, 매도=수량차감, 평단 유지)
-- `profiles` (Phase 4, 예정·중요도 낮음): `id`(=user), `invest_type`(KOFIA 5등급), `invest_score`(0~100), `updated_at`
-- 전 테이블 **RLS: 자기 행만 read/write**(holdings는 적용 완료).
+## 데이터 모델 (Supabase) — **전체 스키마 설계 확정(2026-06-22)**
+> **상세 정본은 `DB-DESIGN.md`.** 7개 표 + 익명 집계 RPC + 프라이버시 설계 + 운영자 인사이트 카탈로그. 아래는 요약.
+- **소유 데이터**(RLS 본인 행만): `holdings`✅적용됨 / `transactions`(매매 원장) / `favorites`(찜)
+- **프로필**(RLS 본인만): `profiles`(invest_type·invest_score·**share_portfolio**동의·display_handle 익명핸들·consent)
+- **참조 마스터**(select 공개·쓰기 service_role): `sectors`(종목→업종) / `consensus_history`(목표주가 일별 스냅샷, 이중목적)
+- **"다른 사람 잔고 보기"** = 익명 집계 RPC(`popular_holdings`, security definer, **보유자 k≥5 미만 종목 숨김**) — 개인 식별 노출 안 함. 운영자만 관리자 콘솔(service_role)로 개인 단위 열람(고지 대상).
+- `search_logs`(검색 활동)는 규제·용량 부담으로 **초기 제외**.
 
 ## 진행 현황 — Phase 0 완료 · Phase 1-1(로그인) 완료 · Phase 1-2(잔고 입력) 다음
 - **Phase 0 토대 ✅(2026-06-21)**: Supabase 프로젝트 생성 + `holdings` 표(RLS) + 앱 연결(`@supabase/supabase-js`, `src/supabase.js`).
