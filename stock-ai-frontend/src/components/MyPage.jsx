@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSession, signInWithGoogle } from "../auth.js";
 import { hasSupabase } from "../supabase.js";
+import { readSavedScore, readLocalScore, saveScore, clearScore } from "../investType.js";
 import Holdings from "./Holdings.jsx";
 import TxHistory from "./TxHistory.jsx";
 import Settings from "./Settings.jsx";
@@ -15,13 +16,24 @@ const SUBS = [
   { key: "settings", label: "설정", login: true },
 ];
 
-export default function MyPage({ onPick, userType, setUserType }) {
+export default function MyPage({ onPick }) {
   const { user, loading } = useSession();
   const [sub, setSub] = useState("holdings");
   const loggedIn = !!user;
 
   const active = SUBS.find((s) => s.key === sub) || SUBS[0];
   const needLogin = active.login && !loggedIn;
+
+  // 저장된 투자유형 점수(로그인=계정 우선, 아니면 localStorage)
+  const savedScore = readSavedScore(user);
+
+  // 비로그인 때 본 결과(localStorage)를 로그인하면 계정에 한 번 동기화 → 다른 기기에서도 유지
+  useEffect(() => {
+    if (!user) return;
+    if (user.user_metadata?.invest_score != null) return; // 이미 계정에 있음
+    const local = readLocalScore();
+    if (local != null) saveScore(local, user);
+  }, [user]);
 
   return (
     <div>
@@ -48,7 +60,9 @@ export default function MyPage({ onPick, userType, setUserType }) {
         <>
           {sub === "holdings" && <Holdings onPick={onPick} />}
           {sub === "tx" && <TxHistory />}
-          {sub === "type" && <Quiz onResult={setUserType} savedType={userType} />}
+          {sub === "type" && (
+            <Quiz savedScore={savedScore} onSave={(s) => saveScore(s, user)} onClear={() => clearScore(user)} />
+          )}
           {sub === "settings" && <Settings user={user} />}
         </>
       )}

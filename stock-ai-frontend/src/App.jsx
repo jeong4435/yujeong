@@ -11,7 +11,6 @@ const IN_APP = typeof navigator !== "undefined" &&
 
 export default function App() {
   const [tab, setTab] = useState("market");
-  const [userType, setUserType] = useState(null);
   const [issueCache, setIssueCache] = useState(null);
   const [pendingQuery, setPendingQuery] = useState(null);
   const [hideInApp, setHideInApp] = useState(false);
@@ -59,7 +58,7 @@ export default function App() {
         {tab === "stock" && (
           <Analyzer initialQuery={pendingQuery} onConsumed={() => setPendingQuery(null)} />
         )}
-        {tab === "my" && <MyPage onPick={pickStock} userType={userType} setUserType={setUserType} />}
+        {tab === "my" && <MyPage onPick={pickStock} />}
 
         <div className="sa-foot">〈주식도 AI〉 · 투자 권유가 아닌 공부용 도구예요</div>
       </div>

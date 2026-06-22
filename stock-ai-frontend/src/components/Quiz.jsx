@@ -1,14 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { QUIZ, getType, computeScore } from "../quizData.js";
 
-export default function Quiz({ onResult, savedType }) {
+// savedScore: 저장된 점수(0~100) 또는 null. 있으면 바로 결과 화면을 보여줌.
+// onSave(score): 완료 시 저장. onClear(): '다시 진단하기' 시 저장 결과 삭제.
+export default function Quiz({ savedScore, onSave, onClear }) {
   const [answers, setAnswers] = useState(Array(QUIZ.length).fill(null));
-  const [done, setDone] = useState(!!savedType);
+  const [resultScore, setResultScore] = useState(savedScore ?? null);
+
+  // 로그인 세션이 늦게 도착해 savedScore가 나중에 들어오는 경우에도 결과를 반영
+  useEffect(() => {
+    if (savedScore != null) setResultScore(savedScore);
+  }, [savedScore]);
 
   const allAnswered = answers.every((a) => a !== null);
-  const score = computeScore(answers);   // 가중평균 0~100
-  const result = done ? (savedType || getType(score)) : null;
-  const pct = result ? Math.max(0, Math.min(100, score)) : 0;
 
   function pick(qi, val) {
     const next = [...answers];
@@ -16,16 +20,19 @@ export default function Quiz({ onResult, savedType }) {
     setAnswers(next);
   }
   function finish() {
-    setDone(true);
-    onResult(getType(score));
+    const s = computeScore(answers);   // 가중평균 0~100
+    setResultScore(s);
+    onSave && onSave(s);               // localStorage + (로그인 시) 계정 저장
   }
   function reset() {
     setAnswers(Array(QUIZ.length).fill(null));
-    setDone(false);
-    onResult(null);
+    setResultScore(null);
+    onClear && onClear();              // 저장된 결과 삭제 → 다음 새로고침에도 문항부터
   }
 
-  if (result) {
+  if (resultScore != null) {
+    const result = getType(resultScore);
+    const pct = Math.max(0, Math.min(100, resultScore));
     return (
       <div>
         <div className="sa-card">
