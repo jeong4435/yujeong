@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { getStock, getDetails, getExplain, getExamples, getPeers, won, num, eok } from "../api.js";
+import { loadStockList, searchLocal } from "../stocklist.js";
 
 // 거래대금 TOP을 못 받아왔을 때 보여줄 기본 예시
 const FALLBACK_EXAMPLES = ["삼성전자", "SK하이닉스", "카카오", "현대차", "005930"];
@@ -70,11 +71,29 @@ export default function Analyzer({ initialQuery, onConsumed }) {
   const [examples, setExamples] = useState(FALLBACK_EXAMPLES);
   const [peers, setPeers] = useState(null);
   const [peersLoading, setPeersLoading] = useState(false);
+  const [sug, setSug] = useState([]);   // 종목 검색 자동완성 목록
 
   // 예시 칩 = 전일 거래대금 TOP (실패하면 기본 목록 유지)
   useEffect(() => {
     getExamples().then((list) => { if (list && list.length) setExamples(list); });
+    loadStockList();   // 종목 목록 미리 로드(이후 타이핑은 로컬 즉시 필터)
   }, []);
+
+  // 타이핑 시 자동완성(로컬 필터). 결과/로딩 중엔 숨김.
+  useEffect(() => {
+    const term = query.trim();
+    if (!term || data || loading) { setSug([]); return; }
+    let alive = true;
+    loadStockList().then(() => { if (alive) setSug(searchLocal(term)); });
+    return () => { alive = false; };
+  }, [query, data, loading]);
+
+  // 드롭다운에서 종목 선택 → 정확한 코드로 바로 분석(대소문자·이름표기 문제 회피)
+  function pick(s) {
+    setSug([]);
+    setQuery(s.name);
+    run(s.code);
+  }
 
   // 이슈 종목 탭에서 넘어온 종목 자동 분석
   useEffect(() => {
@@ -130,13 +149,24 @@ export default function Analyzer({ initialQuery, onConsumed }) {
             </div>
             <div className="sa-herosub">원하는 종목을 검색해주세요</div>
             <div className="sa-searchrow">
-              <input
-                className="sa-input"
-                placeholder="예: 삼성전자  또는  005930"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && run()}
-              />
+              <div className="sa-sug-wrap" style={{ flex: 1, marginBottom: 0 }}>
+                <input
+                  className="sa-input"
+                  placeholder="예: 삼성전자  또는  005930"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && run()}
+                />
+                {sug.length > 0 && (
+                  <div className="sa-sug">
+                    {sug.map((s) => (
+                      <button key={s.code} className="sa-sug-item" onClick={() => pick(s)}>
+                        <span className="nm">{s.name}</span><span className="cd">{s.code}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               <button className="sa-btn" onClick={() => run()} disabled={!query.trim()}>분석</button>
             </div>
             <div className="sa-examples">
