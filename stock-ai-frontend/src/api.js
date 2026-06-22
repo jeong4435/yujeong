@@ -56,18 +56,6 @@ export async function getStockList() {
   }
 }
 
-// (폴백) 서버측 종목 검색 → [{code, name}]. 실패 시 빈 배열.
-export async function searchStocks(query) {
-  try {
-    const r = await fetch(api("/api/search/" + encodeURIComponent(query)));
-    if (!r.ok) return [];
-    const d = await r.json();
-    return Array.isArray(d.results) ? d.results : [];
-  } catch {
-    return [];
-  }
-}
-
 export async function getTrending() {
   const r = await fetch(api("/api/trending"));
   if (!r.ok) throw new Error("서버 응답 실패 (" + r.status + ")");

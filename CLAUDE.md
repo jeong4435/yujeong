@@ -52,7 +52,7 @@ cd stock-ai-frontend && npm install && npm run dev   # :5173
 - `src/supabase.js` — **Supabase 클라이언트**(로그인+내 데이터용). `VITE_SUPABASE_URL`·`VITE_SUPABASE_ANON_KEY`(로컬 `.env`, 배포는 Vercel 환경변수) 있을 때만 생성, 없으면 `supabase=null`(기능만 비활성).
 - `src/auth.js` — **로그인 세션 계층**(2026-06-22). `useSession()`(getSession+onAuthStateChange 구독), `signInWithGoogle()`(`signInWithOAuth` provider=google, redirectTo=origin), `signOut()`, `displayName/avatarUrl`. supabase=null이면 전부 no-op.
 - `src/components/AuthButton.jsx` — **우상단 헤더 로그인 컨트롤**: 비로그인=구글 로그인 버튼(G 로고) / 로그인=아바타+이름+로그아웃. env 없으면 렌더 안 함.
-- **구글 로그인 ✅완료(2026-06-22, Phase 1-1)** + **잔고/매매 기능 ✅(Phase 1-2)**: 마이>내 잔고에서 매수/매도/직접 등록 → `holdings`(자동 갱신)·`transactions`(기록). DB 테이블: `holdings`·`transactions`(둘 다 RLS 본인행). ※`MyStocks.jsx`는 `Holdings.jsx`+`MyPage.jsx`로 대체됨(미사용). **다음=Phase 3(섹터·포트폴리오 분석) 또는 profiles/집계**. 전체 DB설계는 `DB-DESIGN.md`.
+- **구글 로그인 ✅완료(2026-06-22, Phase 1-1)** + **잔고/매매 기능 ✅(Phase 1-2)**: 마이>내 잔고에서 매수/매도/직접 등록 → `holdings`(자동 갱신)·`transactions`(기록). DB 테이블: `holdings`·`transactions`(둘 다 RLS 본인행). 종목 검색은 `/api/stocklist`(전체목록 1회 로드)+`src/stocklist.js`(로컬 즉시 필터). ※`MyStocks.jsx`는 삭제됨(→`MyPage`/`Holdings`/`TxHistory`/`Settings`/`TradeForm`로 분리). **다음=Phase 3(섹터·포트폴리오 분석) 또는 profiles/집계**. 전체 DB설계는 `DB-DESIGN.md`.
 - `src/components/IssueBoard.jsx` — trending 카드. 클릭 → 분석 탭으로 종목 전달(`pendingQuery`)
 - `src/components/Quiz.jsx` + `src/quizData.js` — 투자유형 테스트(서버 불필요). **KOFIA 표준 체계**: 7문항(위험감내·기간·연령·경험·투자자금비중·목적·집중도) **가중치 적용 가중평균 0~100점** → 표준 컷오프(20/40/60/80) → **5등급**(안정형·안정추구형·위험중립형·적극투자형·공격투자형). ※ 등급·구간은 KOFIA 표준, 세부 배점은 표준 틀 기반 대표값(교육용). `computeScore()`·`getType()`
 - `src/styles.css` — 디자인 토큰. 변경 시 여기만 수정

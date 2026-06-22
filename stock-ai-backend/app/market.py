@@ -67,32 +67,6 @@ def stock_list() -> list:
         return []
 
 
-def search_stocks(query: str, n: int = 8) -> list:
-    """종목명/코드 부분일치 검색 → [{code, name}] 최대 n개. (입력창 자동완성용)
-    접두 일치 우선 → 부분 일치. 코드(숫자)면 코드 접두 검색."""
-    q = (query or "").strip()
-    if not q:
-        return []
-    try:
-        df = _listing()  # Code(6자리), Name
-    except Exception:
-        return []
-    out = []
-    if q.isdigit():
-        m = df[df["Code"].str.startswith(q)]
-        for _, r in m.head(n).iterrows():
-            out.append({"code": str(r["Code"]), "name": str(r["Name"])})
-        return out
-    name = df["Name"].astype(str)
-    starts = df[name.str.startswith(q)]
-    rest = df[name.str.contains(q, na=False, regex=False) & ~name.str.startswith(q)]
-    for _, r in starts.head(n).iterrows():
-        out.append({"code": str(r["Code"]), "name": str(r["Name"])})
-    for _, r in rest.head(max(0, n - len(out))).iterrows():
-        out.append({"code": str(r["Code"]), "name": str(r["Name"])})
-    return out[:n]
-
-
 @ttl_cache(120)  # 시세는 자주 바뀌니 2분만 캐시
 def quote(code: str) -> dict:
     """최근 종가·거래량·등락률."""

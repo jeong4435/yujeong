@@ -118,7 +118,7 @@ cd stock-ai-frontend && npm install && npm run dev   # :5173
 - 의존성(백엔드): `fastapi, uvicorn, finance-datareader, requests, lxml, google-generativeai, python-dotenv` (※ pykrx·opendartreader·anthropic 제거됨)
 - 핵심 파일:
   - 백엔드: `app/main.py`(라우트·`_core`/`_details`/`_collect`·startup prewarm), `app/market.py`(quote·fundamentals·value_analysis·trending·**indices**·**analyst_info**·**peer_valuation**), `app/dart.py`(REST: corp map·financials 3년·disclosures), `app/news.py`, `app/cache.py`, `app/explain.py`(**Gemini**: `explain`종목5섹션·`market_overview`시황섹터)
-  - 프론트: `src/api.js`(VITE_API_BASE), `src/supabase.js`(Supabase 클라이언트), `src/auth.js`(로그인 세션 훅·구글 로그인/로그아웃), `src/components/AuthButton.jsx`(우상단 로그인/프로필), `MarketToday.jsx`(오늘의 시장: 지수·시황·섹터), `Analyzer.jsx`(점진로딩·AI분석·동종업계PER·증권가카드), `Quiz.jsx`+`quizData.js`(KOFIA 5등급), `MyStocks.jsx`(로그인 세션 연동·잔고 입력 자리), `IssueBoard.jsx`, `src/styles.css`
+  - 프론트: `src/api.js`(VITE_API_BASE), `src/supabase.js`·`src/auth.js`(로그인 세션·구글), `src/holdings.js`(잔고/매매 데이터계층), `src/stocklist.js`(종목 자동완성 로컬 필터), `src/components/`: `AuthButton.jsx`(우상단 로그인), `MarketToday.jsx`(오늘의 시장), `Analyzer.jsx`(종목 분석), `MyPage.jsx`(나의 주식 허브)+`Holdings.jsx`/`TxHistory.jsx`/`Settings.jsx`/`TradeForm.jsx`(잔고·매매·설정·등록폼), `Quiz.jsx`+`quizData.js`(KOFIA 5등급), `IssueBoard.jsx`, `src/styles.css`
   - 배포: `render.yaml`, `DEPLOY.md`, `stock-ai-*/.env.example`
 
 ## 9. 제품 원칙 (절대 위반 금지)

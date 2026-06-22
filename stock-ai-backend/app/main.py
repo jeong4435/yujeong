@@ -144,12 +144,6 @@ def stocklist():
     return {"stocks": market.stock_list()}
 
 
-@app.get("/api/search/{query}")
-def search(query: str):
-    """종목 자동완성(서버측, 폴백용): 이름/코드 부분일치 → [{code, name}]."""
-    return {"results": market.search_stocks(query)}
-
-
 @app.get("/api/trending")
 def trending():
     """KRX 실데이터 기반 이슈 종목(거래대금 상위·급등·급락)."""
