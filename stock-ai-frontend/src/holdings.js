@@ -73,29 +73,31 @@ export async function registerTrade({ code, name, side, qty, price }) {
   });
   if (txErr) return { error: txErr.message };
 
-  // 2) 잔고 갱신
+  // 2) 잔고 갱신 (실패 시 에러 반환 — 조용히 넘어가지 않게)
+  let hErr = null;
   if (side === "buy") {
     if (cur) {
       const newQty = Number(cur.quantity) + qty;
       const newAvg = (Number(cur.quantity) * Number(cur.avg_price) + qty * price) / newQty;
-      await supabase.from("holdings").update(
+      ({ error: hErr } = await supabase.from("holdings").update(
         { quantity: newQty, avg_price: newAvg, stock_name: name, updated_at: new Date().toISOString() }
-      ).eq("id", cur.id);
+      ).eq("id", cur.id));
     } else {
-      await supabase.from("holdings").insert(
+      ({ error: hErr } = await supabase.from("holdings").insert(
         { user_id, stock_code: code, stock_name: name, quantity: qty, avg_price: price }
-      );
+      ));
     }
   } else { // sell
     const newQty = Number(cur.quantity) - qty;
     if (newQty <= 0) {
-      await supabase.from("holdings").delete().eq("id", cur.id);
+      ({ error: hErr } = await supabase.from("holdings").delete().eq("id", cur.id));
     } else {
-      await supabase.from("holdings").update(
+      ({ error: hErr } = await supabase.from("holdings").update(
         { quantity: newQty, updated_at: new Date().toISOString() }
-      ).eq("id", cur.id);
+      ).eq("id", cur.id));
     }
   }
+  if (hErr) return { error: "거래는 기록됐지만 잔고 갱신에 실패했어요: " + hErr.message };
   return { ok: true };
 }
 
