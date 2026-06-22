@@ -138,6 +138,12 @@ def peers(query: str):
     return market.peer_valuation(code)
 
 
+@app.get("/api/search/{query}")
+def search(query: str):
+    """종목 자동완성: 이름/코드 부분일치 → [{code, name}]."""
+    return {"results": market.search_stocks(query)}
+
+
 @app.get("/api/trending")
 def trending():
     """KRX 실데이터 기반 이슈 종목(거래대금 상위·급등·급락)."""
