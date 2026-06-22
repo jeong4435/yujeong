@@ -12,9 +12,10 @@
 ## 핵심 설계 원칙 (프라이버시·법 — 개인정보보호법)
 - **사용자끼리 원시 잔고 비공개**: 모든 소유 테이블 RLS = 본인 행만 read/write.
 - **"남의 잔고 보기"는 익명 집계 RPC로만**: `security definer` 함수가 전체를 읽되 **개인 식별 없는 합계만** 반환 + **최소표본 k≥5**(보유자 5명 미만 종목은 결과에서 제외 → 역추적 차단).
-- **운영자는 관리자 콘솔(service_role)로** 개인 단위 열람 = 컨트롤러의 정당 처리(가입 고지 대상). service_role 키는 프론트에 **절대 미포함**(현재 anon 키만 — 올바름).
+- **운영자 = 집계 우선(2026-06-22 확정)**: 인사이트는 **집계(익명) 대시보드 중심**으로 본다. 개인 단위 데이터는 보관하되 운영자 상시 열람은 안 하고 **예외적(지원·디버깅) 접근만**(처리방침 고지·접근 최소화). → 사용자 거부감·법적 노출 동시 최소화, 인사이트는 집계로 동일 확보. service_role 키는 프론트에 **절대 미포함**(현재 anon 키만 — 올바름).
+- **잔고 익명 집계 참여 = 기본 ON(opt-out)**: `profiles.share_aggregate bool default true`. 끄면 집계 RPC에서 그 사용자 제외. 집계엔 **금액(원) 미노출, 주식수·비율만**.
 - 컨센서스·섹터는 **공개 시장정보**(개인정보 아님) → 저장·표시 자유, 출처표기+면책 유지.
-- 회원 탈퇴 시 `on delete cascade`로 개인 데이터 전부 자동 삭제.
+- 회원 탈퇴 시 `on delete cascade`로 개인 데이터 전부 자동 삭제. **출시 전 개인정보처리방침 + 가입 동의 화면 필수**(금융데이터라 가능하면 전문가 확인).
 
 ## 테이블 (7개) — 공통: `id uuid default gen_random_uuid()`, RLS enable
 
@@ -28,7 +29,7 @@
 ### 프로필 (RLS = `auth.uid() = id`, 본인만)
 | 표 | 핵심 컬럼 | 비고 |
 |---|---|---|
-| **`profiles`** | id(=auth.users PK·FK), invest_type`check(KOFIA5등급)`, invest_score`check(0~100)`, **share_portfolio bool default false**, display_handle(unique·익명핸들), consent_version, consent_at, updated_at | 가입 시 `handle_new_user()` 트리거로 빈 행 자동생성 |
+| **`profiles`** | id(=auth.users PK·FK), invest_type`check(KOFIA5등급)`, invest_score`check(0~100)`, **share_aggregate bool default true**(익명집계 참여·opt-out), **share_portfolio bool default false**(식별형 공개·MVP제외), display_handle(unique·익명핸들), consent_version, consent_at, updated_at | 가입 시 `handle_new_user()` 트리거로 빈 행 자동생성 |
 
 ### 참조 마스터 (RLS: select=authenticated 허용 / insert·update·delete 정책 미생성 → service_role만 쓰기)
 | 표 | 핵심 컬럼 | 비고 |
@@ -41,7 +42,7 @@
 
 ## "다른 사람 잔고 보기" = 익명 집계 RPC
 `security definer` + `set search_path=public` + `grant execute … to authenticated`:
-- **`popular_holdings(min_holders int default 5)`** → `[{stock_code, stock_name, holder_count, avg_qty, median_qty, avg_avg_price}]`. `having count(distinct user_id) >= greatest(min_holders,5)`. **개별 user_id·정확 잔고·min/max 미반환**.
+- **`popular_holdings(min_holders int default 5)`** → `[{stock_code, stock_name, holder_count, avg_qty, median_qty, avg_avg_price}]`. **참여자만 집계**(holdings ⋈ profiles where `share_aggregate=true`). `having count(distinct user_id) >= greatest(min_holders,5)`. **개별 user_id·정확 잔고·min/max 미반환**.
 - **`holding_distribution(p_stock_code)`** → 특정 종목 `{holder_count, avg_qty, median_qty}`. 종목분석 화면 "이 종목, 이용자 N명이 평균 X주 보유" 한 줄(= 사용자 요구 직격).
 - (선택) `popular_by_invest_type(p_type)` — type×stock 교차 그룹도 k≥5 적용.
 - 확장: 사용자 수천 명 넘으면 동일 임계로 cron 집계 테이블(`popular_holdings_daily`)로 전환.
