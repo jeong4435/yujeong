@@ -102,7 +102,8 @@ export const won = (n) => (n == null ? "확인 어려움" : Number(n).toLocaleSt
 export const num = (n) => (n == null ? "확인 어려움" : Number(n).toLocaleString("ko-KR"));
 export function eok(n) {
   if (n == null) return "확인 어려움";
-  const e = n / 1e8;
-  if (Math.abs(e) >= 1) return e.toLocaleString("ko-KR", { maximumFractionDigits: 0 }) + "억원";
-  return (n / 1e4).toLocaleString("ko-KR", { maximumFractionDigits: 0 }) + "만원";
+  const abs = Math.abs(n);
+  if (abs >= 1e12) return (n / 1e12).toLocaleString("ko-KR", { maximumFractionDigits: 1 }) + "조원";  // 1조↑는 조 단위(짧고 읽기 쉽게)
+  if (abs >= 1e8) return Math.round(n / 1e8).toLocaleString("ko-KR") + "억원";
+  return Math.round(n / 1e4).toLocaleString("ko-KR") + "만원";
 }

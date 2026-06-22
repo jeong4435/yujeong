@@ -5,11 +5,16 @@ import IssueBoard from "./components/IssueBoard.jsx";
 import MyPage from "./components/MyPage.jsx";
 import AuthButton from "./components/AuthButton.jsx";
 
+// 인앱 브라우저(카카오톡·인스타 등) 감지 — 구글 로그인(OAuth)이 막힘(disallowed_useragent)
+const IN_APP = typeof navigator !== "undefined" &&
+  /KAKAOTALK|Instagram|FBAN|FBAV|FB_IAB|Line\/|NAVER\(inapp|Band|Snapchat|DaumApps|; wv/i.test(navigator.userAgent || "");
+
 export default function App() {
   const [tab, setTab] = useState("market");
   const [userType, setUserType] = useState(null);
   const [issueCache, setIssueCache] = useState(null);
   const [pendingQuery, setPendingQuery] = useState(null);
+  const [hideInApp, setHideInApp] = useState(false);
 
   function pickStock(name) {
     setPendingQuery(name);
@@ -19,6 +24,12 @@ export default function App() {
   return (
     <div className="sa-root">
       <div className="sa-wrap">
+        {IN_APP && !hideInApp && (
+          <div className="sa-inapp">
+            <span>⚠️ <b>카카오톡 등 앱 안</b>에서는 구글 로그인이 막혀요. 우측 상단 <b>메뉴(⋮) → '다른 브라우저로 열기'</b>(크롬)로 열어주세요.</span>
+            <button className="sa-inapp-x" onClick={() => setHideInApp(true)} aria-label="닫기">✕</button>
+          </div>
+        )}
         <div className="sa-top">
           <div className="sa-topbar">
             <div className="sa-brand">

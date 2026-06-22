@@ -24,6 +24,14 @@
 .sa-wordmark .br{color:var(--accent);}
 .sa-tag{color:var(--muted);font-size:14px;margin-top:6px;}
 
+/* 인앱 브라우저(카카오톡 등) 경고 배너 */
+.sa-inapp{display:flex;align-items:flex-start;gap:10px;margin:14px 0 0;
+  background:#FFF8E1;border:1px solid #FFE08A;border-radius:12px;padding:12px 14px;
+  font-size:13px;line-height:1.55;color:#7A5B00;}
+.sa-inapp b{color:#5C4400;}
+.sa-inapp-x{flex-shrink:0;background:none;border:none;color:#B08900;cursor:pointer;
+  font-size:13px;padding:2px 4px;line-height:1;}
+
 /* ── 로그인 / 프로필 (우상단) ── */
 .sa-auth-skel{width:104px;height:38px;border-radius:999px;background:var(--soft);}
 .sa-login-btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);
@@ -140,9 +148,15 @@
 
 /* ── 3개년 재무 추세 표 ── */
 .sa-trend{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px;}
+.sa-trend th,.sa-trend td{white-space:nowrap;}  /* 글자가 세로로 쪼개지지 않게 */
 .sa-trend th{font-size:12px;color:var(--muted);font-weight:700;padding:6px 4px;text-align:right;border-bottom:1px solid var(--line);}
 .sa-trend th:first-child{text-align:left;}
 .sa-trend td{padding:9px 4px;border-bottom:1px solid var(--soft);text-align:right;}
+@media (max-width:600px){
+  .sa-trend{font-size:12px;}
+  .sa-trend th,.sa-trend td{padding-left:3px;padding-right:3px;}
+  .sa-trend .rt{padding-left:5px;font-size:11px;}
+}
 .sa-trend tr:last-child td{border-bottom:none;}
 .sa-trend .rl{text-align:left;color:var(--muted);font-weight:700;}
 .sa-trend .rv{font-weight:700;font-variant-numeric:tabular-nums;}
