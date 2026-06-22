@@ -138,9 +138,15 @@ def peers(query: str):
     return market.peer_valuation(code)
 
 
+@app.get("/api/stocklist")
+def stocklist():
+    """종목 전체 목록(코드·이름). 프론트가 한 번 받아 클라에서 즉시 필터(자동완성)."""
+    return {"stocks": market.stock_list()}
+
+
 @app.get("/api/search/{query}")
 def search(query: str):
-    """종목 자동완성: 이름/코드 부분일치 → [{code, name}]."""
+    """종목 자동완성(서버측, 폴백용): 이름/코드 부분일치 → [{code, name}]."""
     return {"results": market.search_stocks(query)}
 
 

@@ -44,7 +44,19 @@ export async function getPeers(query) {
   }
 }
 
-// 종목 자동완성 검색 → [{code, name}]. 실패 시 빈 배열.
+// 종목 전체 목록(코드·이름) — 한 번 받아 클라에서 즉시 필터(자동완성). 실패 시 빈 배열.
+export async function getStockList() {
+  try {
+    const r = await fetch(api("/api/stocklist"));
+    if (!r.ok) return [];
+    const d = await r.json();
+    return Array.isArray(d.stocks) ? d.stocks : [];
+  } catch {
+    return [];
+  }
+}
+
+// (폴백) 서버측 종목 검색 → [{code, name}]. 실패 시 빈 배열.
 export async function searchStocks(query) {
   try {
     const r = await fetch(api("/api/search/" + encodeURIComponent(query)));

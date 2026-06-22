@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
-import { searchStocks, won } from "../api.js";
+import React, { useState, useEffect } from "react";
+import { won } from "../api.js";
+import { loadStockList, searchLocal } from "../stocklist.js";
 import { registerTrade, upsertHolding, resolveStock } from "../holdings.js";
 
 // 매수/매도/잔고직접수정 공용 등록 폼.
@@ -18,16 +19,18 @@ export default function TradeForm({ onDone, modes = ["buy", "sell", "set"] }) {
   const [priceLoading, setPriceLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
-  const deb = useRef();
 
-  // 종목명 자동완성(디바운스 250ms)
+  // 폼 열릴 때 종목 목록을 한 번 미리 로드(이후 타이핑은 로컬에서 즉시 필터)
+  useEffect(() => { loadStockList(); }, []);
+
+  // 종목명 즉시 검색(로컬 필터, 서버 왕복 없음). 목록 로딩 전이면 로드 후 채움.
   useEffect(() => {
     const term = q.trim();
-    clearTimeout(deb.current);
     if (selected && term === selected.name) { setSug([]); return; } // 방금 고른 것
     if (!term) { setSug([]); return; }
-    deb.current = setTimeout(async () => setSug(await searchStocks(term)), 250);
-    return () => clearTimeout(deb.current);
+    let alive = true;
+    loadStockList().then(() => { if (alive) setSug(searchLocal(term)); });
+    return () => { alive = false; };
   }, [q, selected]);
 
   async function pick(s) {

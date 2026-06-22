@@ -54,6 +54,19 @@ def resolve(query: str):
     return None, None
 
 
+@lru_cache(maxsize=1)
+def stock_list() -> list:
+    """KRX 전체 종목 [{code, name}]. 프론트가 **한 번 받아 클라에서 즉시 필터**(자동완성).
+    `_listing()`이 lru_cache라 목록은 캐시됨 + 결과도 캐시(maxsize=1)."""
+    try:
+        df = _listing()
+        codes = df["Code"].tolist()
+        names = df["Name"].astype(str).tolist()
+        return [{"code": str(c), "name": n} for c, n in zip(codes, names)]
+    except Exception:
+        return []
+
+
 def search_stocks(query: str, n: int = 8) -> list:
     """종목명/코드 부분일치 검색 → [{code, name}] 최대 n개. (입력창 자동완성용)
     접두 일치 우선 → 부분 일치. 코드(숫자)면 코드 접두 검색."""
