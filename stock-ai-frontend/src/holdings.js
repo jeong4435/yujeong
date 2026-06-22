@@ -67,10 +67,10 @@ export async function registerTrade({ code, name, side, qty, price }) {
     if (held < qty) return { error: `보유 수량(${held}주)보다 많이 팔 수 없어요` };
   }
 
-  // 1) 거래 기록
-  const { error: txErr } = await supabase.from("transactions").insert({
-    user_id, stock_code: code, stock_name: name, side, quantity: qty, price,
-  });
+  // 1) 거래 기록 (매도는 그 시점 평단=원가를 함께 저장 → 실현손익 계산용)
+  const txRow = { user_id, stock_code: code, stock_name: name, side, quantity: qty, price };
+  if (side === "sell" && cur) txRow.avg_at_sale = cur.avg_price;
+  const { error: txErr } = await supabase.from("transactions").insert(txRow);
   if (txErr) return { error: txErr.message };
 
   // 2) 잔고 갱신 (실패 시 에러 반환 — 조용히 넘어가지 않게)
