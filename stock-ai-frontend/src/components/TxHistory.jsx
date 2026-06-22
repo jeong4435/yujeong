@@ -76,10 +76,10 @@ export default function TxHistory() {
         <h3 style={{ justifyContent: "space-between" }}>
           <span><span className="sa-chip">매매 기록</span> 내 매수·매도 일지</span>
           <span className="sa-h3-actions">
+            <button className="sa-btn sa-btn-sm" onClick={() => setOpen((v) => !v)}>{open ? "닫기" : "+ 등록"}</button>
             <button className="sa-btn sa-btn-sm sa-btn-gray" disabled={rows.length === 0}
               title={rows.length === 0 ? "비울 기록이 없어요" : "매매 기록 전체 비우기"}
               onClick={() => setConfirmReset(true)}>리셋</button>
-            <button className="sa-btn sa-btn-sm" onClick={() => setOpen((v) => !v)}>{open ? "닫기" : "+ 등록"}</button>
           </span>
         </h3>
 

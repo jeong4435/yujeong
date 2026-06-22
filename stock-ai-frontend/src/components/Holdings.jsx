@@ -75,12 +75,12 @@ export default function Holdings({ onPick }) {
         <h3 style={{ justifyContent: "space-between" }}>
           <span><span className="sa-chip">내 잔고</span> 내 보유 주식</span>
           <span className="sa-h3-actions">
-            <button className="sa-btn sa-btn-sm sa-btn-gray" disabled={rows.length === 0}
-              title={rows.length === 0 ? "비울 잔고가 없어요" : "잔고 전체 비우기"}
-              onClick={() => setConfirmReset(true)}>리셋</button>
             <button className="sa-btn sa-btn-sm" onClick={() => setOpen((v) => !v)}>
               {open ? "닫기" : "+ 등록"}
             </button>
+            <button className="sa-btn sa-btn-sm sa-btn-gray" disabled={rows.length === 0}
+              title={rows.length === 0 ? "비울 잔고가 없어요" : "잔고 전체 비우기"}
+              onClick={() => setConfirmReset(true)}>리셋</button>
           </span>
         </h3>
 
