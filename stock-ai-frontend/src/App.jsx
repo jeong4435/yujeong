@@ -30,10 +30,17 @@ export default function App() {
         </div>
 
         <div className="sa-tabs">
-          <button className={"sa-tab" + (tab === "market" ? " on" : "")} onClick={() => setTab("market")}>오늘의 시장</button>
-          <button className={"sa-tab" + (tab === "issue" ? " on" : "")} onClick={() => setTab("issue")}>이슈 종목</button>
-          <button className={"sa-tab" + (tab === "stock" ? " on" : "")} onClick={() => setTab("stock")}>종목 분석</button>
-          <button className={"sa-tab" + (tab === "my" ? " on" : "")} onClick={() => setTab("my")}>나의 주식</button>
+          {[
+            ["market", "📊", "오늘의 시장"],
+            ["issue", "🔥", "이슈 종목"],
+            ["stock", "🔍", "종목 분석"],
+            ["my", "💼", "나의 주식"],
+          ].map(([key, ic, label]) => (
+            <button key={key} className={"sa-tab" + (tab === key ? " on" : "")} onClick={() => setTab(key)}>
+              <span className="sa-tab-ic">{ic}</span>
+              <span className="sa-tab-tx">{label}</span>
+            </button>
+          ))}
         </div>
 
         {tab === "market" && <MarketToday />}

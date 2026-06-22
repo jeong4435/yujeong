@@ -46,11 +46,25 @@
 
 /* ── 탭 ── */
 .sa-tabs{display:flex;gap:6px;margin:20px 0 18px;flex-wrap:wrap;}
-.sa-tab{border:none;background:transparent;color:var(--muted);
+.sa-tab{display:inline-flex;align-items:center;gap:6px;border:none;background:transparent;color:var(--muted);
   font-family:inherit;font-size:14.5px;font-weight:700;padding:10px 16px;
   border-radius:12px;cursor:pointer;transition:.15s;letter-spacing:-.02em;}
 .sa-tab:hover{color:var(--ink2);}
 .sa-tab.on{background:var(--accent-soft);color:var(--accent-d);}
+.sa-tab-ic{font-size:15px;line-height:1;}
+
+/* ── 모바일: 탭을 하단 고정 바로 (반응형, 같은 코드) ── */
+@media (max-width:600px){
+  .sa-wrap{padding-bottom:74px;}                 /* 하단 바에 가리지 않게 */
+  .sa-tabs{position:fixed;left:0;right:0;bottom:0;z-index:50;margin:0;gap:0;
+    background:#fff;border-top:1px solid var(--line);box-shadow:0 -2px 14px var(--shadow);
+    padding:7px 4px;padding-bottom:calc(7px + env(safe-area-inset-bottom,0px));
+    justify-content:space-around;flex-wrap:nowrap;}
+  .sa-tab{flex:1;flex-direction:column;gap:3px;padding:4px 2px;border-radius:10px;min-width:0;}
+  .sa-tab.on{background:transparent;color:var(--accent-d);}   /* 칩 대신 색만 */
+  .sa-tab-ic{font-size:21px;}
+  .sa-tab-tx{font-size:10.5px;font-weight:700;white-space:nowrap;}
+}
 
 /* ── 카드 ── */
 .sa-card{background:var(--paper);border:1px solid var(--line);
@@ -218,6 +232,15 @@
 .sa-subnav-b:hover{color:var(--ink2);}
 .sa-subnav-b.on{background:var(--accent);color:#fff;}
 
+/* ── 내 잔고 상단 요약 ── */
+.sa-port-sum{background:linear-gradient(135deg, var(--accent-soft) 0%, #fff 70%);}
+.sa-port-sum .lbl{font-size:12.5px;font-weight:700;color:var(--muted);}
+.sa-port-sum .amt{font-size:30px;font-weight:800;letter-spacing:-.04em;color:var(--ink);margin:4px 0 8px;}
+.sa-port-sum .row{display:flex;align-items:center;gap:8px;}
+.sa-port-sum .row .k{font-size:13px;color:var(--muted);font-weight:700;}
+.sa-port-sum .row .v{font-size:14.5px;font-weight:800;}
+.sa-port-sum .row .v.up{color:var(--up);} .sa-port-sum .row .v.down{color:var(--down);} .sa-port-sum .row .v.flat{color:var(--ink2);}
+
 /* ── 잔고 카드(삭제 버튼 포함) ── */
 .sa-holding-main{flex:1;min-width:0;display:flex;align-items:center;gap:12px;
   background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;padding:0;}
@@ -284,13 +307,13 @@
 .sa-realized .amt.down,.sa-realized .pct.down{color:var(--down);}
 .sa-realized .amt.flat,.sa-realized .pct.flat{color:var(--ink2);}
 
-/* ── 설정: 프로필 ── */
-.sa-profile{display:flex;align-items:center;gap:12px;}
-.sa-avatar{width:46px;height:46px;border-radius:50%;object-fit:cover;}
-.sa-avatar-fallback{display:flex;align-items:center;justify-content:center;
+/* ── 설정: 프로필 (헤더 AuthButton과 클래스 분리) ── */
+.sa-set-profile{display:flex;align-items:center;gap:12px;}
+.sa-set-avatar{width:46px;height:46px;border-radius:50%;object-fit:cover;}
+.sa-set-avatar-fb{display:flex;align-items:center;justify-content:center;
   background:var(--accent-soft);color:var(--accent-d);font-weight:800;font-size:18px;}
-.sa-profile-name{font-size:15px;font-weight:800;color:var(--ink);}
-.sa-profile-mail{font-size:12.5px;color:var(--muted);margin-top:2px;}
+.sa-set-name{font-size:15px;font-weight:800;color:var(--ink);}
+.sa-set-mail{font-size:12.5px;color:var(--muted);margin-top:2px;}
 
 /* ── 이슈 종목 카드 ── */
 .sa-issuecard{display:block;width:100%;text-align:left;background:var(--paper);

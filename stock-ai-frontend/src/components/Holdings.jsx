@@ -30,8 +30,35 @@ export default function Holdings({ onPick }) {
     return { cur, pct, gain };
   }
 
+  // 잔고 전체 요약(현재가 있는 종목만 합산)
+  let totEval = 0, totCost = 0, priced = 0;
+  rows.forEach((h) => {
+    const cur = prices[h.stock_code]?.price;
+    if (cur == null) return;
+    totEval += cur * Number(h.quantity);
+    totCost += Number(h.avg_price) * Number(h.quantity);
+    priced++;
+  });
+  const totGain = totEval - totCost;
+  const totPct = totCost > 0 ? (totGain / totCost) * 100 : null;
+  const sdir = totGain > 0 ? "up" : totGain < 0 ? "down" : "flat";
+
   return (
     <div>
+      {rows.length > 0 && priced > 0 && (
+        <div className="sa-card sa-port-sum">
+          <div className="lbl">내 투자 · 평가금액</div>
+          <div className="amt">{won(Math.round(totEval))}</div>
+          <div className="row">
+            <span className="k">평가손익</span>
+            <span className={"v " + sdir}>
+              {totGain >= 0 ? "+" : "−"}{won(Math.abs(Math.round(totGain)))}
+              {totPct != null && ` (${totPct > 0 ? "▲ +" : totPct < 0 ? "▼ " : ""}${Math.abs(totPct).toFixed(2)}%)`}
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className="sa-card">
         <h3 style={{ justifyContent: "space-between" }}>
           <span><span className="sa-chip">내 잔고</span> 내 보유 주식</span>

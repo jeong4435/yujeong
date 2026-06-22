@@ -7,15 +7,15 @@ export default function Settings({ user }) {
     <div className="sa-card">
       <h3><span className="sa-chip">설정</span> 내 계정</h3>
 
-      <div className="sa-profile">
+      <div className="sa-set-profile">
         {avatarUrl(user) ? (
-          <img className="sa-avatar" src={avatarUrl(user)} alt="" referrerPolicy="no-referrer" />
+          <img className="sa-set-avatar" src={avatarUrl(user)} alt="" referrerPolicy="no-referrer" />
         ) : (
-          <div className="sa-avatar sa-avatar-fallback">{(displayName(user)[0] || "U").toUpperCase()}</div>
+          <div className="sa-set-avatar sa-set-avatar-fb">{(displayName(user)[0] || "U").toUpperCase()}</div>
         )}
         <div>
-          <div className="sa-profile-name">{displayName(user)}</div>
-          <div className="sa-profile-mail">{user?.email}</div>
+          <div className="sa-set-name">{displayName(user)}</div>
+          <div className="sa-set-mail">{user?.email}</div>
         </div>
       </div>
 
