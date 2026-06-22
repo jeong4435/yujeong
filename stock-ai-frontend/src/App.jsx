@@ -33,7 +33,7 @@ export default function App() {
           <button className={"sa-tab" + (tab === "market" ? " on" : "")} onClick={() => setTab("market")}>오늘의 시장</button>
           <button className={"sa-tab" + (tab === "issue" ? " on" : "")} onClick={() => setTab("issue")}>이슈 종목</button>
           <button className={"sa-tab" + (tab === "stock" ? " on" : "")} onClick={() => setTab("stock")}>종목 분석</button>
-          <button className={"sa-tab" + (tab === "my" ? " on" : "")} onClick={() => setTab("my")}>마이</button>
+          <button className={"sa-tab" + (tab === "my" ? " on" : "")} onClick={() => setTab("my")}>나의 주식</button>
         </div>
 
         {tab === "market" && <MarketToday />}
