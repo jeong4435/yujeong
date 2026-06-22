@@ -42,14 +42,17 @@ cd stock-ai-frontend && npm install && npm run dev   # :5173
 - `.env` 에 `DART_API_KEY` (gitignore). 커밋 금지. 배포 환경변수는 Render에 등록됨.
 
 ## 프론트엔드 (React 18 + Vite)
-- `src/App.jsx` — 탭 4개(왼→오): **오늘의 시장**(기본·홈) / 이슈 종목 / 종목 분석 / 투자 유형 테스트. 워드마크 클릭=오늘의 시장. **우상단 헤더에 `AuthButton`(로그인/프로필)**.
+- `src/App.jsx` — 탭 4개(왼→오): **오늘의 시장**(기본·홈) / 이슈 종목 / 종목 분석 / **마이**. 워드마크 클릭=오늘의 시장. **우상단 헤더에 `AuthButton`(로그인/프로필)**.
+- `src/components/MyPage.jsx` — **마이 허브**(2026-06-22): 서브탭 4개 — 내 잔고/매매 기록/투자 유형/설정. 잔고·매매·설정은 로그인 필요(비로그인 시 로그인 유도), **투자 유형은 비로그인도 가능**(`Quiz`). 종목분석에 있던 '내 보유주식'은 여기로 이동.
+- `src/holdings.js` — **잔고/매매 데이터 계층**: `loadHoldings`·`loadTransactions`·`upsertHolding`(직접 등록/수정)·`registerTrade`(매수/매도→`transactions` 기록 + `holdings` 자동 갱신: 매수=가중평균/매도=차감·0이면 삭제)·`deleteHolding`·`deleteTransaction`·`resolveStock`·`fetchPrices`(현재가).
+- `src/components/Holdings.jsx` — 내 잔고: 목록(평가손익 종가기준) + 등록폼(`TradeForm`: 매수/매도/잔고직접수정 모드) + 종목클릭→분석. `src/components/TxHistory.jsx`(매매 일지)·`Settings.jsx`(프로필·로그아웃).
 - `src/components/MarketToday.jsx` — **오늘의 시장**: `/api/indices`로 코스피·코스닥·나스닥·다우 카드(값·등락률·**스파크라인 SVG**, 상승빨강/하락파랑) + `/api/market-analysis`로 시황·섹터 AI(`▌`2섹션). **섹터 섹션은 섹터·테마명(`SECTORS` 목록)을 형광펜 강조**(`highlightSectors`→`.sa-sector-hl` 바이올렛 마커). 그래프는 종가 시계열(추후 증권사 실시간 교체).
 - `src/components/Analyzer.jsx` — 점진적 로딩: `/api/stock`(가격·PER) 먼저 렌더 → `/api/details`·`/api/explain`·`/api/peers`는 각각 비동기로 뒤에 채움. 카드: AI 분석(`sa-analysis`, `▌`5섹션) + **동종업계 PER 비교표**(`sa-peer`, 중앙값보다 낮으면 파랑/높으면 빨강) + **증권가 카드**(목표주가·**상승여력 게이지** `sa-target-gauge`·투자의견·리포트). ※목표주가 '날짜별 추이'는 무료 시계열이 없어 미구현 → DB(Supabase) 도입 시 매일 스냅샷으로 구현 예정.
 - `src/api.js` — `VITE_API_BASE`로 백엔드 주소 분리(개발은 비워두면 vite proxy)
 - `src/supabase.js` — **Supabase 클라이언트**(로그인+내 데이터용). `VITE_SUPABASE_URL`·`VITE_SUPABASE_ANON_KEY`(로컬 `.env`, 배포는 Vercel 환경변수) 있을 때만 생성, 없으면 `supabase=null`(기능만 비활성).
 - `src/auth.js` — **로그인 세션 계층**(2026-06-22). `useSession()`(getSession+onAuthStateChange 구독), `signInWithGoogle()`(`signInWithOAuth` provider=google, redirectTo=origin), `signOut()`, `displayName/avatarUrl`. supabase=null이면 전부 no-op.
 - `src/components/AuthButton.jsx` — **우상단 헤더 로그인 컨트롤**: 비로그인=구글 로그인 버튼(G 로고) / 로그인=아바타+이름+로그아웃. env 없으면 렌더 안 함.
-- **구글 로그인 ✅완료·배포(2026-06-22, Phase 1-1)**: 구글 클라우드 OAuth + Supabase Google provider(Redirect URLs: localhost:5173/**·vercel/**) + Vercel 환경변수(`VITE_SUPABASE_*`, Production). `MyStocks.jsx`가 `useSession`으로 실제 세션 연동. DB 테이블: `holdings`(잔고, RLS). **다음=Phase 1-2 잔고 입력 UI→`holdings` upsert→평가손익**.
+- **구글 로그인 ✅완료(2026-06-22, Phase 1-1)** + **잔고/매매 기능 ✅(Phase 1-2)**: 마이>내 잔고에서 매수/매도/직접 등록 → `holdings`(자동 갱신)·`transactions`(기록). DB 테이블: `holdings`·`transactions`(둘 다 RLS 본인행). ※`MyStocks.jsx`는 `Holdings.jsx`+`MyPage.jsx`로 대체됨(미사용). **다음=Phase 3(섹터·포트폴리오 분석) 또는 profiles/집계**. 전체 DB설계는 `DB-DESIGN.md`.
 - `src/components/IssueBoard.jsx` — trending 카드. 클릭 → 분석 탭으로 종목 전달(`pendingQuery`)
 - `src/components/Quiz.jsx` + `src/quizData.js` — 투자유형 테스트(서버 불필요). **KOFIA 표준 체계**: 7문항(위험감내·기간·연령·경험·투자자금비중·목적·집중도) **가중치 적용 가중평균 0~100점** → 표준 컷오프(20/40/60/80) → **5등급**(안정형·안정추구형·위험중립형·적극투자형·공격투자형). ※ 등급·구간은 KOFIA 표준, 세부 배점은 표준 틀 기반 대표값(교육용). `computeScore()`·`getType()`
 - `src/styles.css` — 디자인 토큰. 변경 시 여기만 수정

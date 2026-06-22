@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import MarketToday from "./components/MarketToday.jsx";
 import Analyzer from "./components/Analyzer.jsx";
 import IssueBoard from "./components/IssueBoard.jsx";
-import Quiz from "./components/Quiz.jsx";
+import MyPage from "./components/MyPage.jsx";
 import AuthButton from "./components/AuthButton.jsx";
 
 export default function App() {
@@ -33,7 +33,7 @@ export default function App() {
           <button className={"sa-tab" + (tab === "market" ? " on" : "")} onClick={() => setTab("market")}>오늘의 시장</button>
           <button className={"sa-tab" + (tab === "issue" ? " on" : "")} onClick={() => setTab("issue")}>이슈 종목</button>
           <button className={"sa-tab" + (tab === "stock" ? " on" : "")} onClick={() => setTab("stock")}>종목 분석</button>
-          <button className={"sa-tab" + (tab === "type" ? " on" : "")} onClick={() => setTab("type")}>투자 유형 테스트{userType ? " ✓" : ""}</button>
+          <button className={"sa-tab" + (tab === "my" ? " on" : "")} onClick={() => setTab("my")}>마이</button>
         </div>
 
         {tab === "market" && <MarketToday />}
@@ -41,7 +41,7 @@ export default function App() {
         {tab === "stock" && (
           <Analyzer initialQuery={pendingQuery} onConsumed={() => setPendingQuery(null)} />
         )}
-        {tab === "type" && <Quiz onResult={setUserType} savedType={userType} />}
+        {tab === "my" && <MyPage onPick={pickStock} userType={userType} setUserType={setUserType} />}
 
         <div className="sa-foot">〈주식도 AI〉 · 투자 권유가 아닌 공부용 도구예요</div>
       </div>

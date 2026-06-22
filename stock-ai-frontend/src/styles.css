@@ -210,6 +210,55 @@
 .sa-holding .hr.down{color:var(--down);}
 .sa-holding .hr.flat{color:var(--muted);}
 
+/* ── 마이페이지: 서브 네비 ── */
+.sa-subnav{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;}
+.sa-subnav-b{border:none;background:var(--btn);color:var(--muted);font-family:inherit;
+  font-size:13.5px;font-weight:700;padding:9px 15px;border-radius:999px;cursor:pointer;
+  white-space:nowrap;transition:.15s;}
+.sa-subnav-b:hover{color:var(--ink2);}
+.sa-subnav-b.on{background:var(--accent);color:#fff;}
+
+/* ── 잔고 카드(삭제 버튼 포함) ── */
+.sa-holding-main{flex:1;min-width:0;display:flex;align-items:center;gap:12px;
+  background:none;border:none;font-family:inherit;text-align:left;cursor:pointer;padding:0;}
+.sa-holding-x{flex-shrink:0;background:none;border:none;color:var(--muted2);cursor:pointer;
+  font-size:13px;padding:6px 8px;border-radius:8px;line-height:1;}
+.sa-holding-x:hover{background:var(--soft);color:var(--up);}
+.sa-holding .hr .hsub{font-size:11.5px;color:var(--muted);font-weight:700;margin-top:2px;}
+
+/* ── 매매 등록 폼 ── */
+.sa-btn-sm{padding:7px 13px;font-size:13px;}
+.sa-btn-ghost{background:var(--btn);color:var(--ink2);}
+.sa-btn-ghost:hover{background:var(--line);}
+.sa-tradeform{background:var(--soft);border-radius:14px;padding:14px;margin:4px 0 14px;}
+.sa-mode{display:flex;gap:6px;margin-bottom:10px;}
+.sa-mode-b{flex:1;border:none;background:#fff;color:var(--muted);font-family:inherit;
+  font-size:13px;font-weight:700;padding:9px 0;border-radius:10px;cursor:pointer;border:1px solid var(--line);}
+.sa-mode-b.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+.sa-tradeform .sa-input{width:100%;margin-bottom:8px;}
+.sa-traderow{display:flex;gap:8px;}
+.sa-traderow .sa-input{margin-bottom:0;}
+.sa-trade-hint{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5;}
+
+/* ── 매매 기록 목록 ── */
+.sa-txlist{margin-top:14px;}
+.sa-tx{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);}
+.sa-tx:last-child{border-bottom:none;}
+.sa-tx-side{flex-shrink:0;font-size:12px;font-weight:800;padding:4px 9px;border-radius:8px;}
+.sa-tx-side.buy{background:var(--up-soft);color:var(--up);}
+.sa-tx-side.sell{background:var(--down-soft);color:var(--down);}
+.sa-tx-main{flex:1;min-width:0;}
+.sa-tx-main .nm{font-size:14.5px;font-weight:800;color:var(--ink);}
+.sa-tx-main .sub{font-size:12.5px;color:var(--muted);margin-top:2px;}
+
+/* ── 설정: 프로필 ── */
+.sa-profile{display:flex;align-items:center;gap:12px;}
+.sa-avatar{width:46px;height:46px;border-radius:50%;object-fit:cover;}
+.sa-avatar-fallback{display:flex;align-items:center;justify-content:center;
+  background:var(--accent-soft);color:var(--accent-d);font-weight:800;font-size:18px;}
+.sa-profile-name{font-size:15px;font-weight:800;color:var(--ink);}
+.sa-profile-mail{font-size:12.5px;color:var(--muted);margin-top:2px;}
+
 /* ── 이슈 종목 카드 ── */
 .sa-issuecard{display:block;width:100%;text-align:left;background:var(--paper);
   border:1px solid var(--line);border-radius:16px;padding:16px 17px;margin-bottom:11px;

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { getStock, getDetails, getExplain, getExamples, getPeers, won, num, eok } from "../api.js";
-import MyStocks from "./MyStocks.jsx";
 
 // 거래대금 TOP을 못 받아왔을 때 보여줄 기본 예시
 const FALLBACK_EXAMPLES = ["삼성전자", "SK하이닉스", "카카오", "현대차", "005930"];
@@ -146,8 +145,6 @@ export default function Analyzer({ initialQuery, onConsumed }) {
               ))}
             </div>
           </div>
-
-          <MyStocks onPick={(name) => run(name)} />
         </>
       )}
 
