@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { won, num } from "../api.js";
 import { loadTransactions, deleteTransaction } from "../holdings.js";
+import TradeForm from "./TradeForm.jsx";
 
 // 매매 기록(거래 일지) 목록. 삭제 가능(※잔고는 자동 보정 안 됨 — 기록만 지움).
 function fmt(ts) {
@@ -14,6 +15,7 @@ function fmt(ts) {
 export default function TxHistory() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -24,7 +26,12 @@ export default function TxHistory() {
 
   return (
     <div className="sa-card">
-      <h3><span className="sa-chip">매매 기록</span> 내 매수·매도 일지</h3>
+      <h3 style={{ justifyContent: "space-between" }}>
+        <span><span className="sa-chip">매매 기록</span> 내 매수·매도 일지</span>
+        <button className="sa-btn sa-btn-sm" onClick={() => setOpen((v) => !v)}>{open ? "닫기" : "+ 등록"}</button>
+      </h3>
+
+      {open && <TradeForm modes={["buy", "sell"]} onDone={() => { setOpen(false); reload(); }} />}
 
       {loading ? (
         <div className="sa-load"><div className="sa-spin" /><div className="sa-loadmsg">기록 불러오는 중…</div></div>
