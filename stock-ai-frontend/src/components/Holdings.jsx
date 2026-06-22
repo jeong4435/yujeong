@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { won, num } from "../api.js";
-import { loadHoldings, fetchPrices, deleteHolding } from "../holdings.js";
+import { loadHoldings, fetchPrices, deleteHolding, resetHoldings } from "../holdings.js";
 import TradeForm from "./TradeForm.jsx";
+import ConfirmModal from "./ConfirmModal.jsx";
 
-// 내 잔고 화면: 보유 목록(평가손익) + 매수/매도/직접등록 + 삭제.
+// 내 잔고 화면: 보유 목록(평가손익) + 매수/매도/직접등록 + 삭제 + 전체 리셋.
 export default function Holdings({ onPick }) {
   const [rows, setRows] = useState([]);
   const [prices, setPrices] = useState({});
   const [loading, setLoading] = useState(true);
-  const [open, setOpen] = useState(false);   // 등록 폼 토글
+  const [open, setOpen] = useState(false);       // 등록 폼 토글
+  const [confirmReset, setConfirmReset] = useState(false); // 리셋 확인 팝업
+  const [resetting, setResetting] = useState(false);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -20,6 +23,15 @@ export default function Holdings({ onPick }) {
   }, []);
 
   useEffect(() => { reload(); }, [reload]);
+
+  async function doReset() {
+    setResetting(true);
+    const r = await resetHoldings();
+    setResetting(false);
+    setConfirmReset(false);
+    if (r.error) { alert("리셋 실패: " + r.error); return; }
+    reload();
+  }
 
   function pnl(h) {
     const cur = prices[h.stock_code]?.price;
@@ -62,9 +74,14 @@ export default function Holdings({ onPick }) {
       <div className="sa-card">
         <h3 style={{ justifyContent: "space-between" }}>
           <span><span className="sa-chip">내 잔고</span> 내 보유 주식</span>
-          <button className="sa-btn sa-btn-sm" onClick={() => setOpen((v) => !v)}>
-            {open ? "닫기" : "+ 등록"}
-          </button>
+          <span className="sa-h3-actions">
+            {rows.length > 0 && (
+              <button className="sa-btn sa-btn-sm sa-btn-gray" onClick={() => setConfirmReset(true)}>리셋</button>
+            )}
+            <button className="sa-btn sa-btn-sm" onClick={() => setOpen((v) => !v)}>
+              {open ? "닫기" : "+ 등록"}
+            </button>
+          </span>
         </h3>
 
         {open && <TradeForm onDone={() => { setOpen(false); reload(); }} />}
@@ -106,6 +123,17 @@ export default function Holdings({ onPick }) {
           평가손익은 <b>종가 기준</b>이라 장중 실시간과 달라요. 잔고는 본인만 볼 수 있어요.
         </div>
       </div>
+
+      <ConfirmModal
+        open={confirmReset}
+        title="잔고를 리셋할까요?"
+        body={<>현재 보유 주식 <b>{rows.length}개</b>가 목록에서 모두 사라져요.<br />
+          입력했던 내용은 <b>DB에 백업으로 보관</b>되니 데이터가 사라지진 않아요.</>}
+        confirmLabel="리셋하기"
+        busy={resetting}
+        onConfirm={doReset}
+        onCancel={() => setConfirmReset(false)}
+      />
     </div>
   );
 }

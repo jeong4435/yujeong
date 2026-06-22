@@ -50,6 +50,39 @@ export async function deleteTransaction(id) {
   return error ? { error: error.message } : { ok: true };
 }
 
+// 잔고 전체 리셋: 비우기 직전 내용을 reset_events에 백업(snapshot)하고 holdings 행을 모두 비움.
+// → 화면에선 사라지지만 데이터는 reset_events에 보존됨 + '리셋했다'는 기록이 남음.
+export async function resetHoldings() {
+  if (!supabase) return { error: "no supabase" };
+  const user_id = await uid();
+  if (!user_id) return { error: "로그인이 필요해요" };
+  const cur = await loadHoldings();              // 비우기 직전 현재 잔고
+  if (cur.length === 0) return { ok: true, count: 0 };
+  // 1) 백업 + 리셋 기록 남기기
+  const { error: rErr } = await supabase.from("reset_events")
+    .insert({ user_id, scope: "holdings", item_count: cur.length, snapshot: cur });
+  if (rErr) return { error: rErr.message };
+  // 2) 실제 잔고 비우기 (RLS로도 본인 것만이지만 명시적으로 user_id 한정)
+  const { error: dErr } = await supabase.from("holdings").delete().eq("user_id", user_id);
+  if (dErr) return { error: "백업은 됐지만 비우기에 실패했어요: " + dErr.message };
+  return { ok: true, count: cur.length };
+}
+
+// 매매기록 전체 리셋: 비우기 직전 내용을 백업하고 transactions 행을 모두 비움(실현손익도 0으로).
+export async function resetTransactions() {
+  if (!supabase) return { error: "no supabase" };
+  const user_id = await uid();
+  if (!user_id) return { error: "로그인이 필요해요" };
+  const cur = await loadTransactions(10000);     // 전부 백업
+  if (cur.length === 0) return { ok: true, count: 0 };
+  const { error: rErr } = await supabase.from("reset_events")
+    .insert({ user_id, scope: "transactions", item_count: cur.length, snapshot: cur });
+  if (rErr) return { error: rErr.message };
+  const { error: dErr } = await supabase.from("transactions").delete().eq("user_id", user_id);
+  if (dErr) return { error: "백업은 됐지만 비우기에 실패했어요: " + dErr.message };
+  return { ok: true, count: cur.length };
+}
+
 // 매수/매도 등록 → transactions 기록 + holdings 자동 갱신(항상 반영).
 // 매수: 평단 가중평균. 매도: 수량 차감(0 이하면 잔고 삭제), 평단 유지.
 export async function registerTrade({ code, name, side, qty, price }) {

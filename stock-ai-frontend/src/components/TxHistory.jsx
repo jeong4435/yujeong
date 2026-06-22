@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { won, num } from "../api.js";
-import { loadTransactions, deleteTransaction } from "../holdings.js";
+import { loadTransactions, deleteTransaction, resetTransactions } from "../holdings.js";
 import TradeForm from "./TradeForm.jsx";
+import ConfirmModal from "./ConfirmModal.jsx";
 
 // 매매 기록(거래 일지) + 실현 손익. 매도 시 저장한 평단(avg_at_sale)으로 손익 계산.
 function fmt(ts) {
@@ -24,6 +25,8 @@ export default function TxHistory() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false); // 리셋 확인 팝업
+  const [resetting, setResetting] = useState(false);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -31,6 +34,15 @@ export default function TxHistory() {
     setLoading(false);
   }, []);
   useEffect(() => { reload(); }, [reload]);
+
+  async function doReset() {
+    setResetting(true);
+    const r = await resetTransactions();
+    setResetting(false);
+    setConfirmReset(false);
+    if (r.error) { alert("리셋 실패: " + r.error); return; }
+    reload();
+  }
 
   // 실현 손익 합계(매도 기록 중 평단 저장된 것만)
   const sells = rows.filter((t) => t.side === "sell" && t.avg_at_sale != null);
@@ -63,7 +75,12 @@ export default function TxHistory() {
       <div className="sa-card">
         <h3 style={{ justifyContent: "space-between" }}>
           <span><span className="sa-chip">매매 기록</span> 내 매수·매도 일지</span>
-          <button className="sa-btn sa-btn-sm" onClick={() => setOpen((v) => !v)}>{open ? "닫기" : "+ 등록"}</button>
+          <span className="sa-h3-actions">
+            {rows.length > 0 && (
+              <button className="sa-btn sa-btn-sm sa-btn-gray" onClick={() => setConfirmReset(true)}>리셋</button>
+            )}
+            <button className="sa-btn sa-btn-sm" onClick={() => setOpen((v) => !v)}>{open ? "닫기" : "+ 등록"}</button>
+          </span>
         </h3>
 
         {open && <TradeForm modes={["buy", "sell"]} onDone={() => { setOpen(false); reload(); }} />}
@@ -104,6 +121,17 @@ export default function TxHistory() {
           매도 손익은 <b>판 시점의 평단</b> 기준이에요. 기록을 지워도 잔고는 자동으로 안 바뀌어요(잔고는 <b>내 잔고</b>에서 직접 수정).
         </div>
       </div>
+
+      <ConfirmModal
+        open={confirmReset}
+        title="매매 기록을 리셋할까요?"
+        body={<>매매 기록 <b>{rows.length}건</b>이 목록에서 모두 사라지고, <b>실현손익 합계도 0으로</b> 초기화돼요.<br />
+          기록 내용은 <b>DB에 백업으로 보관</b>되니 데이터가 사라지진 않아요.</>}
+        confirmLabel="리셋하기"
+        busy={resetting}
+        onConfirm={doReset}
+        onCancel={() => setConfirmReset(false)}
+      />
     </div>
   );
 }

@@ -267,6 +267,24 @@
 .sa-btn-sm{padding:7px 13px;font-size:13px;}
 .sa-btn-ghost{background:var(--btn);color:var(--ink2);}
 .sa-btn-ghost:hover{background:var(--line);}
+/* 리셋 버튼 = 등록과 같은 모양, 배경만 회색(흰 글씨 유지) */
+.sa-btn-gray{background:var(--muted);}
+.sa-btn-gray:hover{background:#7A828D;}
+.sa-h3-actions{display:flex;align-items:center;gap:7px;flex-shrink:0;}
+
+/* ── 확인 팝업(모달) ── */
+.sa-modal-bg{position:fixed;inset:0;z-index:1000;background:rgba(25,31,40,.45);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+  animation:sa-fade .12s ease;}
+.sa-modal{background:#fff;border-radius:18px;max-width:340px;width:100%;
+  padding:22px 22px 16px;box-shadow:0 16px 48px rgba(25,31,40,.22);
+  animation:sa-pop .14s ease;}
+.sa-modal-title{font-size:17px;font-weight:800;color:var(--ink);letter-spacing:-.03em;}
+.sa-modal-body{font-size:13.5px;color:var(--ink2);line-height:1.6;margin:9px 0 18px;}
+.sa-modal-body b{color:var(--ink);font-weight:800;}
+.sa-modal-actions{display:flex;gap:8px;justify-content:flex-end;}
+@keyframes sa-fade{from{opacity:0;}to{opacity:1;}}
+@keyframes sa-pop{from{opacity:0;transform:translateY(8px) scale(.98);}to{opacity:1;transform:none;}}
 .sa-tradeform{background:var(--soft);border-radius:14px;padding:14px;margin:4px 0 14px;}
 .sa-mode{display:flex;gap:6px;margin-bottom:10px;}
 .sa-mode-b{flex:1;border:none;background:#fff;color:var(--muted);font-family:inherit;
