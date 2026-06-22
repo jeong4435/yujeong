@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import MarketToday from "./components/MarketToday.jsx";
 import Analyzer from "./components/Analyzer.jsx";
 import IssueBoard from "./components/IssueBoard.jsx";
 import MyPage from "./components/MyPage.jsx";
 import AuthButton from "./components/AuthButton.jsx";
+import ThemeToggle from "./components/ThemeToggle.jsx";
+import { getInitialTheme, saveTheme } from "./theme.js";
 
 // 인앱 브라우저(카카오톡·인스타 등) 감지 — 구글 로그인(OAuth)이 막힘(disallowed_useragent)
 const IN_APP = typeof navigator !== "undefined" &&
@@ -14,6 +16,10 @@ export default function App() {
   const [issueCache, setIssueCache] = useState(null);
   const [pendingQuery, setPendingQuery] = useState(null);
   const [hideInApp, setHideInApp] = useState(false);
+  const [theme, setTheme] = useState(getInitialTheme);
+
+  useEffect(() => { saveTheme(theme); }, [theme]);
+  const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
 
   function pickStock(name) {
     setPendingQuery(name);
@@ -21,7 +27,7 @@ export default function App() {
   }
 
   return (
-    <div className="sa-root">
+    <div className={"sa-root" + (theme === "dark" ? " dark" : "")}>
       <div className="sa-wrap">
         {IN_APP && !hideInApp && (
           <div className="sa-inapp">
@@ -34,7 +40,10 @@ export default function App() {
             <div className="sa-brand">
               <h1 className="sa-wordmark" onClick={() => setTab("market")}>주식도 <span className="br">AI</span></h1>
             </div>
-            <AuthButton />
+            <div className="sa-topright">
+              <ThemeToggle theme={theme} onToggle={toggleTheme} />
+              <AuthButton />
+            </div>
           </div>
           <div className="sa-tag">DART·KRX에서 가져온 진짜 데이터를, 쉽게 풀어드려요.</div>
         </div>
