@@ -85,6 +85,18 @@ export async function getMarketAnalysis() {
   }
 }
 
+// 기간별(week/month) 시장 흐름 AI 분석. 당일은 getMarketAnalysis() 사용.
+export async function getMarketTrend(period) {
+  try {
+    const r = await fetch(api(`/api/market-trend?period=${period}`));
+    if (!r.ok) return null;
+    const d = await r.json();
+    return d.analysis || null;
+  } catch {
+    return null;
+  }
+}
+
 // 종목 분석 예시 칩 = 전일 거래대금 TOP (하루 한 번 갱신). 실패 시 빈 배열 → 프론트 기본 목록 폴백.
 export async function getExamples() {
   try {

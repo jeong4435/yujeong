@@ -81,6 +81,39 @@ def set_market_cache(content: str):
         pass
 
 
+# ── 기간별 트렌드 캐시 (week / month, 하루 1회) ───────────────────────────
+
+def get_trend_cache(period: str) -> str | None:
+    sb = _sb()
+    if not sb:
+        return None
+    try:
+        res = (
+            sb.table("market_analysis_cache")
+            .select("content")
+            .eq("cache_date", _today())
+            .eq("session", period)
+            .maybe_single()
+            .execute()
+        )
+        return (res.data or {}).get("content")
+    except Exception:
+        return None
+
+
+def set_trend_cache(period: str, content: str):
+    sb = _sb()
+    if not sb or not content:
+        return
+    try:
+        sb.table("market_analysis_cache").upsert(
+            {"cache_date": _today(), "session": period, "content": content},
+            on_conflict="cache_date,session",
+        ).execute()
+    except Exception:
+        pass
+
+
 # ── 종목 캐시 ──────────────────────────────────────────────────────────────
 
 def get_stock_cache(code: str) -> str | None:

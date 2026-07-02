@@ -316,6 +316,64 @@ def _build_portfolio_prompt(holdings: list, invest_type: str) -> str:
 - 한국어로 작성"""
 
 
+def _build_trend_prompt(indices: dict, period: str) -> str:
+    label = "1주일(5거래일)" if period == "week" else "1개월(25거래일)"
+    idx_list = (indices or {}).get("indices", []) or []
+    idx_text = "없음"
+    rows = []
+    for x in idx_list:
+        series = x.get("series") or []
+        n = 5 if period == "week" else len(series)
+        slice_ = series[-n:] if len(series) >= n else series
+        if len(slice_) >= 2:
+            pct = (slice_[-1] - slice_[0]) / slice_[0] * 100
+            sign = f"{pct:+.2f}%"
+        else:
+            sign = "데이터 부족"
+        rows.append(f"  {x.get('name','')}: {x.get('price','')} ({label} 등락 {sign})")
+    if rows:
+        idx_text = "\n".join(rows)
+
+    return f"""당신은 한국 주식시장 전문 애널리스트입니다.
+아래는 최근 {label} 주요 지수 데이터입니다. 수치는 절대 바꾸지 마세요.
+
+[주요 지수 — {label} 흐름]
+{idx_text}
+
+---
+아래 2개 항목을 분석해주세요. 각 항목은 4~6문장.
+
+1. 시황
+최근 {label} 국내(코스피·코스닥)와 미국(나스닥·다우) 지수의 방향을 종합해 이 기간 시장 분위기를 설명.
+국내외 흐름이 같은지 다른지, 위험을 선호하는(공격적) 분위기인지 회피하는(보수적) 분위기인지 쉽게 풀어줘.
+
+2. 섹터
+이 기간의 전반적인 시장 흐름에서 어떤 업종(섹터·테마)이 강세·약세였는지 지수 흐름을 근거로 추론.
+(개별 종목 데이터가 없으므로 지수 흐름 기반으로만 분석하고, 모르면 단정하지 말 것)
+
+작성 규칙:
+- **독자 수준 = 고등학생~대학교 2학년**. 쉬운 말·비유로 풀되, 쉽게 쓴다고 **분석의 깊이·정확성·전문성을 낮추지 말 것**(근거는 구체적으로, 두루뭉술 금지).
+- 전문용어는 처음 등장 시 괄호로 짧게 풀이
+- 데이터에 없는 수치를 지어내지 말 것
+- '지금 사세요/파세요' 같은 매수·매도 권유 금지
+- **각 항목은 "▌제목 :: 한 줄 요약" 형식 머리줄로 시작**(' :: '로 구분, 요약은 25자 내외 핵심 한 문장), 다음 줄부터 상세.
+  · 예) "▌시황 :: {label} 간 미국 강세, 국내는 박스권"
+- 제목은 "시황 / 섹터" 그대로 사용
+- 한국어로 작성"""
+
+
+def market_trend(indices: dict, period: str):
+    """기간별(week/month) 시장 흐름 AI 분석(2섹션). DB 캐시 하루 1회."""
+    from . import ai_cache
+    cached = ai_cache.get_trend_cache(period)
+    if cached:
+        return cached
+    result = _generate(_build_trend_prompt(indices, period))
+    if result:
+        ai_cache.set_trend_cache(period, result)
+    return result
+
+
 def portfolio_coach(holdings: list, invest_type: str):
     """포트폴리오 AI 코칭 (잔고 + 투자유형 기반 3섹션)."""
     if not holdings:
