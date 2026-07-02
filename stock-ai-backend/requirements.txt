@@ -5,3 +5,4 @@ finance-datareader
 requests
 lxml
 google-generativeai
+supabase>=2.0

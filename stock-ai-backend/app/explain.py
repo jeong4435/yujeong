@@ -188,8 +188,17 @@ def _generate(prompt: str):
 
 
 def explain(data: dict):
-    """개별 종목 종합 분석(5섹션)."""
-    return _generate(_build_prompt(data))
+    """개별 종목 종합 분석(5섹션). DB 캐시 우선 → 없으면 Gemini 호출 후 저장."""
+    from . import ai_cache
+    code = data.get("code", "")
+    if code:
+        cached = ai_cache.get_stock_cache(code)
+        if cached:
+            return cached
+    result = _generate(_build_prompt(data))
+    if result and code:
+        ai_cache.set_stock_cache(code, result)
+    return result
 
 
 def _build_market_prompt(indices: dict, trending: dict) -> str:
@@ -255,5 +264,12 @@ def _build_market_prompt(indices: dict, trending: dict) -> str:
 
 
 def market_overview(indices: dict, trending: dict):
-    """오늘의 시장 — 시황·섹터 AI 분석(2섹션). 키 없으면 None."""
-    return _generate(_build_market_prompt(indices, trending))
+    """오늘의 시장 — 시황·섹터 AI 분석(2섹션). DB 캐시 우선 → 없으면 Gemini 호출 후 저장."""
+    from . import ai_cache
+    cached = ai_cache.get_market_cache()
+    if cached:
+        return cached
+    result = _generate(_build_market_prompt(indices, trending))
+    if result:
+        ai_cache.set_market_cache(result)
+    return result
