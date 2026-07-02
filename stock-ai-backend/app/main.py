@@ -177,6 +177,17 @@ async def portfolio_coach_api(req: Request):
     return {"coaching": explain.portfolio_coach(holdings, invest_type)}
 
 
+@app.post("/api/extract-holdings")
+async def extract_holdings_api(req: Request):
+    """잔고 캡처 이미지(base64) → 종목 목록 추출. 이미지는 프론트에서 압축 후 전송."""
+    body = await req.json()
+    image_b64 = body.get("image", "")
+    if not image_b64:
+        return {"holdings": [], "error": "이미지가 없어요."}
+    holdings = explain.extract_holdings(image_b64)
+    return {"holdings": holdings}
+
+
 @app.get("/api/examples")
 def examples():
     """종목 분석 검색창 아래 예시 칩 = 전일 거래대금 TOP (하루 한 번 갱신)."""

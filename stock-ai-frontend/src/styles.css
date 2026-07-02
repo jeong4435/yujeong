@@ -479,3 +479,30 @@ a.sa-report.link:hover .rt{color:var(--accent-d);}
 .sa-analysis-divider{height:1px;background:var(--line);margin:4px 0;}
 .sa-analysis-loading{display:flex;align-items:center;gap:10px;padding:18px 0;color:var(--muted);}
 .sa-analysis-loading .sa-spin{flex-shrink:0;}
+
+/* ── 잔고 수정하기 메뉴 ── */
+.sa-edit-menu{background:var(--soft);border-radius:14px;padding:6px;margin:4px 0 12px;display:flex;flex-direction:column;gap:2px;}
+.sa-edit-menu-item{display:flex;align-items:center;gap:12px;background:none;border:none;
+  width:100%;padding:12px 10px;border-radius:10px;cursor:pointer;text-align:left;transition:.12s;}
+.sa-edit-menu-item:hover{background:var(--paper);}
+.sa-edit-menu-item:disabled{opacity:.38;cursor:not-allowed;}
+.sa-edit-menu-item .ico{font-size:20px;flex-shrink:0;width:28px;text-align:center;}
+.sa-edit-menu-item .txt{display:flex;flex-direction:column;gap:2px;}
+.sa-edit-menu-item .ttl{font-size:14px;font-weight:700;color:var(--ink);}
+.sa-edit-menu-item .sub{font-size:12px;color:var(--muted);}
+.sa-edit-menu-item.danger .ttl{color:var(--up);}
+
+/* ── 캡처 불러오기 ── */
+.sa-import-capture{padding:4px 0 8px;}
+.sa-capture-drop{border:2px dashed var(--line);border-radius:14px;padding:28px 16px;
+  text-align:center;cursor:pointer;color:var(--muted);font-size:14px;transition:.15s;margin-bottom:4px;}
+.sa-capture-drop:hover{border-color:var(--accent);color:var(--accent);background:var(--soft);}
+.sa-import-table{display:flex;flex-direction:column;gap:6px;margin-bottom:4px;}
+.sa-import-head{display:grid;grid-template-columns:1fr 80px 110px 28px;gap:6px;
+  font-size:11.5px;font-weight:700;color:var(--muted);padding:0 2px 4px;}
+.sa-import-row{display:grid;grid-template-columns:1fr 80px 110px 28px;gap:6px;align-items:center;}
+.sa-import-row .sa-input{margin-bottom:0;padding:8px 10px;font-size:13px;}
+.sa-input-err{border-color:var(--up) !important;background:#fff5f5;}
+.sa-input-warn{border-color:#F5C842 !important;background:#FFFBEA;}
+.sa-import-dup-badge{position:absolute;top:-7px;right:4px;font-size:10px;font-weight:700;
+  color:#B08000;background:#FFF3C0;padding:1px 6px;border-radius:999px;pointer-events:none;}

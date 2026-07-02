@@ -381,6 +381,46 @@ def portfolio_coach(holdings: list, invest_type: str):
     return _generate(_build_portfolio_prompt(holdings, invest_type))
 
 
+def extract_holdings(image_b64: str) -> list:
+    """잔고 캡처 이미지(base64) → [{name, quantity, avg_price}] 추출. 실패 시 []."""
+    import json, re
+    key = os.environ.get("GEMINI_API_KEY")
+    if not key or genai is None:
+        return []
+    try:
+        genai.configure(api_key=key)
+    except Exception:
+        return []
+
+    prompt = """이 이미지는 주식 앱의 잔고(보유 주식) 화면입니다.
+보이는 모든 종목의 정보를 추출해주세요.
+
+반환 형식: JSON 배열만. 앞뒤 설명 텍스트 없이.
+[{"name": "종목명", "quantity": 수량(숫자), "avg_price": 평균단가(숫자, 원 단위 정수)}]
+
+주의:
+- 평균단가·평단·매입단가·취득단가는 모두 같은 항목임
+- 쉼표는 천 단위 구분자 (예: 71,000 → 71000으로 반환)
+- 읽을 수 없거나 화면에 없는 값은 null
+- 해외주식이 달러 표기면 avg_price를 null로
+- 수량이 소수면 그대로 반환 (반올림 금지)
+- ETF·펀드·주식 구분 없이 보이는 종목 모두 추출"""
+
+    image_part = {"inline_data": {"mime_type": "image/jpeg", "data": image_b64}}
+    order = ([_working_model] if _working_model else []) + \
+            [m for m in MODEL_CANDIDATES if m != _working_model]
+    for name in order:
+        try:
+            response = genai.GenerativeModel(name).generate_content([prompt, image_part])
+            text = (response.text or "").strip()
+            m = re.search(r"\[.*\]", text, re.DOTALL)
+            if m:
+                return json.loads(m.group())
+        except Exception:
+            continue
+    return []
+
+
 def market_overview(indices: dict, trending: dict):
     """오늘의 시장 — 시황·섹터 AI 분석(2섹션). DB 캐시 우선 → 없으면 Gemini 호출 후 저장."""
     from . import ai_cache

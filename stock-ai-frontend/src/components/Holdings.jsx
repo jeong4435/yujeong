@@ -4,14 +4,15 @@ import { loadHoldings, fetchPrices, deleteHolding, resetHoldings } from "../hold
 import TradeForm from "./TradeForm.jsx";
 import ConfirmModal from "./ConfirmModal.jsx";
 import PortfolioCoach from "./PortfolioCoach.jsx";
+import ImportCapture from "./ImportCapture.jsx";
 
-// 내 잔고 화면: 보유 목록(평가손익) + 매수/매도/직접등록 + 삭제 + 전체 리셋.
+// 내 잔고 화면: 보유 목록(평가손익) + 잔고 수정하기 메뉴(캡처/직접입력/리셋)
 export default function Holdings({ onPick, investType }) {
   const [rows, setRows] = useState([]);
   const [prices, setPrices] = useState({});
   const [loading, setLoading] = useState(true);
-  const [open, setOpen] = useState(false);       // 등록 폼 토글
-  const [confirmReset, setConfirmReset] = useState(false); // 리셋 확인 팝업
+  const [mode, setMode] = useState(null);      // null | "menu" | "form" | "capture"
+  const [confirmReset, setConfirmReset] = useState(false);
   const [resetting, setResetting] = useState(false);
 
   const reload = useCallback(async () => {
@@ -33,6 +34,9 @@ export default function Holdings({ onPick, investType }) {
     if (r.error) { alert("리셋 실패: " + r.error); return; }
     reload();
   }
+
+  function openMenu() { setMode((m) => m === "menu" ? null : "menu"); }
+  function closeAll() { setMode(null); }
 
   function pnl(h) {
     const cur = prices[h.stock_code]?.price;
@@ -56,6 +60,8 @@ export default function Holdings({ onPick, investType }) {
   const totPct = totCost > 0 ? (totGain / totCost) * 100 : null;
   const sdir = totGain > 0 ? "up" : totGain < 0 ? "down" : "flat";
 
+  const existingNames = rows.map((r) => r.stock_name);
+
   return (
     <div>
       {rows.length > 0 && priced > 0 && (
@@ -75,24 +81,61 @@ export default function Holdings({ onPick, investType }) {
       <div className="sa-card">
         <h3 style={{ justifyContent: "space-between" }}>
           <span><span className="sa-chip">내 잔고</span> 내 보유 주식</span>
-          <span className="sa-h3-actions">
-            <button className="sa-btn sa-btn-sm" onClick={() => setOpen((v) => !v)}>
-              {open ? "닫기" : "+ 등록"}
-            </button>
-            <button className="sa-btn sa-btn-sm sa-btn-gray" disabled={rows.length === 0}
-              title={rows.length === 0 ? "비울 잔고가 없어요" : "잔고 전체 비우기"}
-              onClick={() => setConfirmReset(true)}>리셋</button>
-          </span>
+          <button className={"sa-btn sa-btn-sm" + (mode ? " on" : "")} onClick={openMenu}>
+            {mode ? "닫기" : "잔고 수정하기"}
+          </button>
         </h3>
 
-        {open && <TradeForm onDone={() => { setOpen(false); reload(); }} />}
+        {/* 수정 메뉴 */}
+        {mode === "menu" && (
+          <div className="sa-edit-menu">
+            <button className="sa-edit-menu-item" onClick={() => setMode("capture")}>
+              <span className="ico">📷</span>
+              <span className="txt">
+                <span className="ttl">캡처로 불러오기</span>
+                <span className="sub">잔고 화면 캡처에서 자동 추출</span>
+              </span>
+            </button>
+            <button className="sa-edit-menu-item" onClick={() => setMode("form")}>
+              <span className="ico">✏️</span>
+              <span className="txt">
+                <span className="ttl">직접 입력</span>
+                <span className="sub">매수·매도·잔고 수동 등록</span>
+              </span>
+            </button>
+            <button
+              className="sa-edit-menu-item danger"
+              disabled={rows.length === 0}
+              title={rows.length === 0 ? "비울 잔고가 없어요" : "잔고 전체 비우기"}
+              onClick={() => { setConfirmReset(true); setMode(null); }}
+            >
+              <span className="ico">🗑</span>
+              <span className="txt">
+                <span className="ttl">잔고 전체 리셋</span>
+                <span className="sub">모든 보유 종목 비우기</span>
+              </span>
+            </button>
+          </div>
+        )}
+
+        {mode === "capture" && (
+          <ImportCapture
+            existingNames={existingNames}
+            onDone={() => { closeAll(); reload(); }}
+            onCancel={closeAll}
+          />
+        )}
+
+        {mode === "form" && (
+          <TradeForm onDone={() => { closeAll(); reload(); }} />
+        )}
 
         {loading ? (
           <div className="sa-load"><div className="sa-spin" /><div className="sa-loadmsg">잔고 불러오는 중…</div></div>
         ) : rows.length === 0 ? (
           <div className="sa-holdings-empty">
             <div className="ico">📥</div>
-            <div className="t">아직 등록된 보유 주식이 없어요.<br />위 <b>+ 등록</b>으로 매수·매도나 잔고를 입력해보세요.</div>
+            <div className="t">아직 등록된 보유 주식이 없어요.<br /><b>잔고 수정하기</b>로 캡처 불러오기나 직접 입력해보세요.</div>
           </div>
         ) : (
           <div className="sa-holdings">
@@ -140,4 +183,3 @@ export default function Holdings({ onPick, investType }) {
     </div>
   );
 }
-

@@ -125,6 +125,21 @@ export async function getPortfolioCoach(holdings, investType) {
   }
 }
 
+// 잔고 캡처 이미지 → 종목 목록 추출 (Gemini Vision). base64 문자열 전달.
+export async function extractHoldings(imageB64) {
+  try {
+    const r = await fetch(api("/api/extract-holdings"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image: imageB64 }),
+    });
+    if (!r.ok) return { holdings: [], error: "서버 오류" };
+    return r.json();
+  } catch {
+    return { holdings: [], error: "네트워크 오류" };
+  }
+}
+
 // 숫자 포맷
 export const won = (n) => (n == null ? "확인 어려움" : Number(n).toLocaleString("ko-KR") + "원");
 export const num = (n) => (n == null ? "확인 어려움" : Number(n).toLocaleString("ko-KR"));
