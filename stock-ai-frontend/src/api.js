@@ -97,6 +97,22 @@ export async function getExamples() {
   }
 }
 
+// 내 잔고 + 투자유형 → Gemini 포트폴리오 AI 코칭. 키 없으면 null.
+export async function getPortfolioCoach(holdings, investType) {
+  try {
+    const r = await fetch(api("/api/portfolio-coach"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ holdings, invest_type: investType || "" }),
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    return d.coaching || null;
+  } catch {
+    return null;
+  }
+}
+
 // 숫자 포맷
 export const won = (n) => (n == null ? "확인 어려움" : Number(n).toLocaleString("ko-KR") + "원");
 export const num = (n) => (n == null ? "확인 어려움" : Number(n).toLocaleString("ko-KR"));

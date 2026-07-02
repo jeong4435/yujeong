@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSession, signInWithGoogle } from "../auth.js";
 import { hasSupabase } from "../supabase.js";
 import { readSavedScore, readLocalScore, saveScore, clearScore } from "../investType.js";
+import { getType } from "../quizData.js";
 import Holdings from "./Holdings.jsx";
 import TxHistory from "./TxHistory.jsx";
 import Settings from "./Settings.jsx";
@@ -26,6 +27,7 @@ export default function MyPage({ onPick }) {
 
   // 저장된 투자유형 점수(로그인=계정 우선, 아니면 localStorage)
   const savedScore = readSavedScore(user);
+  const investTypeName = savedScore != null ? getType(savedScore)?.name : null;
 
   // 비로그인 때 본 결과(localStorage)를 로그인하면 계정에 한 번 동기화 → 다른 기기에서도 유지
   useEffect(() => {
@@ -58,7 +60,7 @@ export default function MyPage({ onPick }) {
         </div>
       ) : (
         <>
-          {sub === "holdings" && <Holdings onPick={onPick} />}
+          {sub === "holdings" && <Holdings onPick={onPick} investType={investTypeName} />}
           {sub === "tx" && <TxHistory />}
           {sub === "type" && (
             <Quiz savedScore={savedScore} onSave={(s) => saveScore(s, user)} onClear={() => clearScore(user)} />

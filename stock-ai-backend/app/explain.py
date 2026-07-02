@@ -263,6 +263,66 @@ def _build_market_prompt(indices: dict, trending: dict) -> str:
 - 한국어로 작성"""
 
 
+def _build_portfolio_prompt(holdings: list, invest_type: str) -> str:
+    total_eval = sum((h.get("eval_amount") or 0) for h in holdings)
+    rows = []
+    for h in holdings:
+        name = h.get("name", "")
+        qty = h.get("quantity", 0)
+        avg = h.get("avg_price")
+        cur = h.get("current_price")
+        pnl = h.get("pnl_pct")
+        eval_amt = h.get("eval_amount")
+        weight = (eval_amt / total_eval * 100) if (total_eval and eval_amt) else None
+        line = f"  - {name} {qty}주"
+        if avg:  line += f" · 평단 {avg:,.0f}원"
+        if cur:  line += f" · 현재가 {cur:,.0f}원"
+        if pnl is not None: line += f" · 손익 {pnl:+.1f}%"
+        if weight is not None: line += f" · 비중 {weight:.1f}%"
+        rows.append(line)
+    invest_label = invest_type or "미진단"
+    return f"""당신은 한국 주식시장 전문 포트폴리오 매니저입니다.
+아래는 사용자의 실제 보유 주식과 투자 성향입니다. 수치는 절대 바꾸지 마세요.
+
+[투자 유형]
+{invest_label}
+
+[보유 주식 ({len(holdings)}종목)]
+{chr(10).join(rows)}
+
+---
+아래 3개 항목을 각각 3~5문장으로 분석해주세요.
+
+1. 포트폴리오 구성
+보유 종목들이 어떤 업종(섹터·테마)에 속하는지 파악하고, 어디에 얼마나 집중됐는지 비중 기반으로 설명.
+(종목명으로 업종 추론. 불확실하면 단정하지 말 것)
+
+2. 집중·분산 평가
+특정 섹터나 종목에 지나치게 집중됐는지, 분산이 잘 됐는지 평가.
+집중도가 높으면 어떤 리스크가 있는지 설명.
+
+3. 투자 유형 대비 진단
+'{invest_label}' 유형과 현재 포트폴리오가 잘 맞는지 진단.
+유형 대비 위험도가 높거나 낮은 부분을 쉽게 설명.
+('이렇게 바꾸세요' 같은 직접 권유 금지)
+
+작성 규칙:
+- **독자 수준 = 고등학생~대학교 2학년**. 쉬운 말·비유로 풀되, 깊이·정확성을 낮추지 말 것(근거는 구체적으로).
+- 전문용어는 처음 등장 시 괄호로 짧게 풀이
+- 데이터에 없는 수치 지어내지 말 것
+- '사세요/파세요' 같은 매수·매도 직접 권유 금지
+- **각 항목은 "▌제목 :: 한 줄 요약" 형식 머리줄로 시작**(' :: '로 구분, 요약은 25자 내외), 다음 줄부터 상세.
+- 제목은 "포트폴리오 구성 / 집중·분산 평가 / 투자 유형 대비 진단" 그대로 사용
+- 한국어로 작성"""
+
+
+def portfolio_coach(holdings: list, invest_type: str):
+    """포트폴리오 AI 코칭 (잔고 + 투자유형 기반 3섹션)."""
+    if not holdings:
+        return None
+    return _generate(_build_portfolio_prompt(holdings, invest_type))
+
+
 def market_overview(indices: dict, trending: dict):
     """오늘의 시장 — 시황·섹터 AI 분석(2섹션). DB 캐시 우선 → 없으면 Gemini 호출 후 저장."""
     from . import ai_cache

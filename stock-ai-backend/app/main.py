@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 
 load_dotenv()  # .env 의 DART_API_KEY 등을 환경변수로 로드
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -160,6 +160,15 @@ def indices():
 def market_analysis():
     """오늘의 시장 — 시황·섹터 AI 분석. (느림, 키 없으면 analysis=null)"""
     return {"analysis": explain.market_overview(market.indices(), market.trending())}
+
+
+@app.post("/api/portfolio-coach")
+async def portfolio_coach_api(req: Request):
+    """잔고 목록 + 투자유형 → Gemini 포트폴리오 AI 코칭 (3섹션)."""
+    body = await req.json()
+    holdings = body.get("holdings", [])
+    invest_type = body.get("invest_type", "") or ""
+    return {"coaching": explain.portfolio_coach(holdings, invest_type)}
 
 
 @app.get("/api/examples")

@@ -3,9 +3,10 @@ import { won, num } from "../api.js";
 import { loadHoldings, fetchPrices, deleteHolding, resetHoldings } from "../holdings.js";
 import TradeForm from "./TradeForm.jsx";
 import ConfirmModal from "./ConfirmModal.jsx";
+import PortfolioCoach from "./PortfolioCoach.jsx";
 
 // 내 잔고 화면: 보유 목록(평가손익) + 매수/매도/직접등록 + 삭제 + 전체 리셋.
-export default function Holdings({ onPick }) {
+export default function Holdings({ onPick, investType }) {
   const [rows, setRows] = useState([]);
   const [prices, setPrices] = useState({});
   const [loading, setLoading] = useState(true);
@@ -123,6 +124,8 @@ export default function Holdings({ onPick }) {
           평가손익은 <b>종가 기준</b>이라 장중 실시간과 달라요. 잔고는 본인만 볼 수 있어요.
         </div>
       </div>
+
+      <PortfolioCoach holdings={rows} prices={prices} investType={investType} />
 
       <ConfirmModal
         open={confirmReset}
